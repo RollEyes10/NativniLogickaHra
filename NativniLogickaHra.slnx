@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="NativniLogickaHra/NativniLogickaHra.csproj">
+    <Deploy />
+  </Project>
+</Solution>

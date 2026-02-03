@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NativniLogickaHra.View.ConnectionAI"
+             Title="Správa API klíčů">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="20">
+
+            <!-- ===== SEZNAM PŘIPOJENÍ ===== -->
+            <Label Text="Uložená připojení"
+                   FontSize="22"
+                   FontAttributes="Bold"/>
+
+            <CollectionView x:Name="ConnectionsList"
+                            SelectionMode="Single"
+                            SelectionChanged="OnConnectionSelected">
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="12"
+                               Margin="0,5"
+                               BorderColor="LightGray"
+                               CornerRadius="10">
+
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Provider}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"/>
+
+                                <Label Text="{Binding Status}"
+                                       FontSize="12"
+                                       TextColor="Gray"/>
+                            </VerticalStackLayout>
+
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ===== EDITACE / NOVÝ KLÍČ ===== -->
+            <Label Text="Detail připojení"
+                   FontSize="22"
+                   FontAttributes="Bold"/>
+
+            <Label Text="Poskytovatel"/>
+            <Picker x:Name="ProviderPicker"
+                    SelectedIndexChanged="OnProviderChanged">
+                <Picker.Items>
+                    <x:String>Gemini</x:String>
+                    <x:String>ChatGPT</x:String>
+                    <x:String>Claude</x:String>
+                </Picker.Items>
+            </Picker>
+
+            <Label Text="API klíč"/>
+            <Entry x:Name="ApiKeyEntry"
+                   Placeholder="Vložte API klíč"
+                   IsPassword="True"/>
+
+            <!-- GEMINI MODE -->
+            <VerticalStackLayout x:Name="GeminiModePanel"
+                                 IsVisible="False"
+                                 Spacing="5">
+
+                <HorizontalStackLayout Spacing="10">
+                    <Label Text="Režim:" VerticalOptions="Center"/>
+                    <CheckBox x:Name="PaidCheckBox"/>
+                    <Label Text="PAID (bez omezení)" VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <Label Text="FREE: 5 dotazů / min | PAID: bez omezení"
+                       FontSize="12"
+                       TextColor="Gray"/>
+            </VerticalStackLayout>
+
+            <Button Text="Uložit / Aktualizovat"
+                    Clicked="OnSaveKeyClicked"/>
+
+            <Button Text="Smazat připojení"
+                    BackgroundColor="Red"
+                    TextColor="White"
+                    Clicked="OnDeleteKeyClicked"/>
+
+            <Label x:Name="StatusLabel"
+                   HorizontalOptions="Center"
+                   FontAttributes="Italic"
+                   TextColor="Gray"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

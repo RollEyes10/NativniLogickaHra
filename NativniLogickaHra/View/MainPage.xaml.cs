@@ -1,24 +1,32 @@
 ﻿namespace NativniLogickaHra
 {
+    using NativniLogickaHra.View;
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-
         public MainPage()
         {
             InitializeComponent();
         }
 
-        private void OnCounterClicked(object? sender, EventArgs e)
+
+        // Obsluha tlačítka Start Game
+        private async void OnStartGameClicked(object sender, EventArgs e)
         {
-            count++;
+            // Zde můžeš navigovat na stránku s hrou nebo vypsat upozornění
+            await Navigation.PushAsync(new Game());
+        }
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
+        // Obsluha tlačítka Settings
+        private async void OnSettingsClicked(object sender, EventArgs e)
+        {
+            // Přepne uživatele na stránku nastavení
+            await Navigation.PushAsync(new SettingsPage());
+        }
 
-            SemanticScreenReader.Announce(CounterBtn.Text);
+        // Obsluha tlačítka About
+        private async void OnAboutClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new ConnectionAI());
         }
     }
 }

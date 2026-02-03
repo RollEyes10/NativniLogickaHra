@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using NativniLogickaHra.View;
 
 namespace NativniLogickaHra
 {
@@ -11,7 +11,8 @@ namespace NativniLogickaHra
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            // Musí zde být NavigationPage, aby aplikace věděla, co zobrazit
+            return new Window(new NavigationPage(new MainPage()));
         }
     }
 }

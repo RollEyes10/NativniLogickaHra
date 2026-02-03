@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NativniLogickaHra.View.SettingsPage"
+             Title="Nastavení">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="20">
+
+            <Label Text="Nastavení hry"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <!-- Jazyk -->
+            <VerticalStackLayout>
+                <Label Text="Jazyk aplikace:" />
+                <Picker x:Name="LanguagePicker">
+                    <Picker.Items>
+                        <x:String>Čeština</x:String>
+                        <x:String>English</x:String>
+                    </Picker.Items>
+                </Picker>
+            </VerticalStackLayout>
+
+            <!-- Hlasitost -->
+            <VerticalStackLayout>
+                <Label x:Name="VolumeLabel" Text="Hlasitost: 50 %" />
+                <Slider x:Name="VolumeSlider"
+                        Minimum="0"
+                        Maximum="100"
+                        Value="50"
+                        ValueChanged="OnVolumeChanged" />
+            </VerticalStackLayout>
+
+            <!-- Obtížnost -->
+            <VerticalStackLayout>
+                <Label Text="Obtížnost:" />
+                <Picker x:Name="DifficultyPicker" SelectedIndexChanged="OnDifficultyChanged">
+                    <Picker.Items>
+                        <x:String>Easy</x:String>
+                        <x:String>Normal</x:String>
+                        <x:String>Hard</x:String>
+                        <x:String>Custom</x:String>
+                    </Picker.Items>
+                </Picker>
+            </VerticalStackLayout>
+
+            <!-- Životy -->
+            <VerticalStackLayout>
+                <Label Text="Omezené životy:" />
+                <Switch x:Name="LivesEnabledSwitch"
+                        IsToggled="true"
+                        Toggled="OnLivesToggled" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout>
+                <Label x:Name="LivesLabel" Text="Počet životů: 5" />
+                <Slider x:Name="LivesSlider"
+                        Minimum="0"
+                        Maximum="10"
+                        Value="5"
+                        ValueChanged="OnLivesChanged" />
+            </VerticalStackLayout>
+            
+            <!-- Samohlásky -->
+            <VerticalStackLayout>
+                <Label x:Name="RequiredConsonantsLabel" Text="Souhlásky pro povolení samohlásek: 3" />
+                <Slider x:Name="RequiredConsonantsSlider"
+                        Minimum="0"
+                        Maximum="10"
+                        Value="3"
+                        ValueChanged="OnRequiredConsonantsChanged" />
+            </VerticalStackLayout>
+
+            <Button Text="Uložit a zpět"
+                    Margin="0,20,0,0"
+                    Clicked="OnSaveClicked" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

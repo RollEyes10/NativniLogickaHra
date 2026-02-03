@@ -1,0 +1,29 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NativniLogickaHra.View.Game"
+             Title="Šibenice">
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+
+        <Label x:Name="lblSecretWord"
+           FontSize="28"
+           HorizontalOptions="Center"/>
+
+        <Label x:Name="lblInfo"
+           FontSize="14"
+           HorizontalOptions="Center"/>
+
+        <Label x:Name="lblStatus"
+           FontSize="14"
+           TextColor="Gray"
+           HorizontalOptions="Center"/>
+
+        <Entry x:Name="entGuess"
+           Placeholder="Zadej písmeno"/>
+
+        <Button Text="Hádej"
+            Clicked="OnGuessClicked"/>
+
+    </VerticalStackLayout>
+
+</ContentPage>

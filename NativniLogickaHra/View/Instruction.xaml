@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NativniLogickaHra.View.Instruction"
+             Title="Návod – API klíče">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="18">
+
+            <Button Text="⬅ Zpět"
+                    HorizontalOptions="Start"
+                    Clicked="OnBackClicked"/>
+
+            <Label Text="Jak přidat API klíč"
+                   FontSize="24"
+                   FontAttributes="Bold"/>
+
+            <Label Text="Tato aplikace podporuje Gemini, ChatGPT a Claude."
+                   TextColor="Gray"/>
+
+            <!-- GEMINI -->
+            <Label Text="🔹 Google Gemini"
+                   FontSize="20"
+                   FontAttributes="Bold"/>
+
+            <Label Text="1. Otevři:" FontAttributes="Bold"/>
+            <Label Text="https://aistudio.google.com/app/apikey"
+                   TextColor="Blue">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Tapped="OnOpenLink"
+                        CommandParameter="https://aistudio.google.com/app/apikey"/>
+                </Label.GestureRecognizers>
+            </Label>
+
+            <Label Text="2. Vytvoř API klíč"/>
+            <Label Text="3. Vyber Gemini v aplikaci a klíč vlož"/>
+
+            <!-- CHATGPT -->
+            <Label Text="🔹 ChatGPT (OpenAI)"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   Margin="0,15,0,0"/>
+
+            <Label Text="https://platform.openai.com/api-keys"
+                   TextColor="Blue">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Tapped="OnOpenLink"
+                        CommandParameter="https://platform.openai.com/api-keys"/>
+                </Label.GestureRecognizers>
+            </Label>
+
+            <Label Text="Vytvoř klíč a vlož ho do aplikace."/>
+
+            <!-- CLAUDE -->
+            <Label Text="🔹 Claude (Anthropic)"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   Margin="0,15,0,0"/>
+
+            <Label Text="https://console.anthropic.com/"
+                   TextColor="Blue">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Tapped="OnOpenLink"
+                        CommandParameter="https://console.anthropic.com/"/>
+                </Label.GestureRecognizers>
+            </Label>
+
+            <Label Text="Vytvoř API klíč a ulož ho do aplikace."/>
+
+            <!-- SECURITY -->
+            <Label Text="⚠️ Bezpečnost"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   Margin="0,15,0,0"/>
+
+            <Label Text="• API klíč nikdy nesdílej"/>
+            <Label Text="• Pokud unikne, okamžitě ho zneplatni"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

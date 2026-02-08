@@ -6,7 +6,7 @@ using NativniLogickaHra.Services;
 public partial class Game : ContentPage
 {
     private Hangman? hra;
-    private bool livesEnabled = true;
+    private HashSet<char> wrongLetters = new();
 
     public Game()
     {
@@ -21,12 +21,11 @@ public partial class Game : ContentPage
 
     private async Task StartNewGameAsync()
     {
-        if (lblStatus != null)
-            lblStatus.Text = "Načítám slovo…";
+        wrongLetters.Clear();
+        lblStatus.Text = "Načítám slovo…";
 
         string provider = "Gemini";
-        string storageKey = provider;
-        string? apiKey = await SecureStorage.Default.GetAsync(storageKey);
+        string? apiKey = await SecureStorage.Default.GetAsync(provider);
 
         string word = "programovani";
 
@@ -37,59 +36,58 @@ public partial class Game : ContentPage
                 var aiWord = await AiWordService.GetWordAsync(provider, apiKey);
                 if (IsValidWord(aiWord))
                     word = aiWord!;
-                else
-                    lblStatus?.Text = "AI vrátila neplatné slovo, použito záložní.";
             }
             catch
             {
-                lblStatus?.Text = "AI nedostupná, použito záložní slovo.";
+                lblStatus.Text = "AI nedostupná, použito záložní slovo.";
             }
         }
-        else
-        {
-            lblStatus?.Text = "Chybí API klíč, použito výchozí slovo.";
-        }
 
-        // ⬇⬇⬇ NAČTENÍ NASTAVENÍ ⬇⬇⬇
-        var livesEnabledPref = Preferences.Default.Get("LivesEnabled", true);
-        // if lives are disabled in settings, treat as infinite lives
-        int lives = livesEnabledPref
+        int lives = Preferences.Default.Get("LivesEnabled", true)
             ? Preferences.Default.Get("LivesCount", 6)
             : int.MaxValue;
+
         bool vowelsEnabled = Preferences.Default.Get("VowelsEnabled", true);
         int vowelsCount = Preferences.Default.Get("VowelsCount", 3);
         int requiredConsonants = Preferences.Default.Get("RequiredConsonants", 3);
 
-        livesEnabled = livesEnabledPref;
-
-        hra = new Hangman(
-            word,
-            lives,
-            vowelsEnabled,
-            vowelsCount,
-            requiredConsonants
-        );
-
+        hra = new Hangman(word, lives, vowelsEnabled, vowelsCount, requiredConsonants);
         UpdateUI();
     }
 
     private static bool IsValidWord(string? word)
-    {
-        if (string.IsNullOrWhiteSpace(word))
-            return false;
+        => !string.IsNullOrWhiteSpace(word) && word.All(char.IsLetter);
 
-        return word.All(c => c >= 'a' && c <= 'z') && word.Length >= 4;
+    // 🔥 AUTOMATICKÉ HÁDÁNÍ PŘI PSANÍ
+    private void OnGuessTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(e.NewTextValue))
+            return;
+
+        DoGuess();
     }
 
-    private void OnGuessClicked(object sender, EventArgs e)
+
+    // 🔥 ENTER = POTVRZENÍ
+    private void OnGuessCompleted(object sender, EventArgs e)
+    {
+        DoGuess();
+    }
+
+    private void DoGuess()
     {
         if (hra is null) return;
+        if (string.IsNullOrWhiteSpace(entGuess.Text)) return;
 
-        var guessText = entGuess?.Text;
-        if (string.IsNullOrWhiteSpace(guessText)) return;
+        char guess = char.ToLower(entGuess.Text[0]);
+        string result = hra.Guess(entGuess.Text);
 
-        lblStatus?.Text = hra.Guess(guessText);
-        if (entGuess != null) entGuess.Text = string.Empty;
+        if (result == "Špatně!")
+            wrongLetters.Add(guess);
+
+        lblStatus.Text = result;
+        entGuess.Text = string.Empty;
+
         UpdateUI();
         CheckEndGame();
     }
@@ -98,37 +96,27 @@ public partial class Game : ContentPage
     {
         if (hra is null) return;
 
-        if (lblSecretWord != null)
-            lblSecretWord.Text = string.Join(" ", hra.SecretWord);
-
-        if (lblInfo != null)
-            lblInfo.Text =
-                $"Uhodnuté souhlásky: {hra.ConsonantsGuessed}/{hra.RequiredConsonants} | Životy: {hra.RemainingAttempts}";
+        lblSecretWord.Text = string.Join(" ", hra.SecretWord);
+        lblInfo.Text =
+            $"Souhlásky: {hra.ConsonantsGuessed}/{hra.RequiredConsonants} | Životy: {hra.RemainingAttempts}";
+        lblWrongLetters.Text = "Špatně uhodnutá písmena: " + string.Join(" ", wrongLetters);
     }
 
     private async void CheckEndGame()
     {
         if (hra is null) return;
 
-        var secretText = lblSecretWord?.Text ?? string.Empty;
-
-        if (!secretText.Contains('_'))
+        if (!lblSecretWord.Text.Contains('_'))
         {
-            await DisplayAlertAsync("Výhra!", "Gratuluji, uhodl jsi slovo.", "OK");
-            ResetGame();
+            await DisplayAlert("Výhra!", "Uhodl jsi slovo 🎉", "OK");
+            await StartNewGameAsync();
         }
         else if (hra.RemainingAttempts <= 0)
         {
-            await DisplayAlertAsync("Prohra",
-                $"Došly ti životy. Slovo bylo: {hra.TargetWord}",
-                "Zkusit znovu");
-
-            ResetGame();
+            await DisplayAlert("Prohra",
+                $"Slovo bylo: {hra.TargetWord}",
+                "Znovu");
+            await StartNewGameAsync();
         }
-    }
-
-    private async void ResetGame()
-    {
-        await StartNewGameAsync();
     }
 }

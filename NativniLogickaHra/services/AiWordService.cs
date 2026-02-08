@@ -1,13 +1,22 @@
 ﻿using System.Net.Http.Json;
 using System.Linq;
-using Google.GenAI;
 
 namespace NativniLogickaHra.Services;
 
 public static class AiWordService
 {
-    private static readonly RateLimiter GeminiLimiter =
-        new RateLimiter(5, TimeSpan.FromMinutes(1));
+    private static readonly RateLimiter GeminiLimiter = new RateLimiter(5, TimeSpan.FromMinutes(1));
+
+    private static readonly string[] Themes =
+    {
+        "zvíře", "předmět", "povolání", "příroda", "město", "technologie", "sport", "jídlo", "činnost", "náhodné slovo"
+    };
+
+    private static string BuildPrompt()
+    {
+        var theme = Themes[Random.Shared.Next(Themes.Length)];
+        return $"Vrať jedno náhodné české slovo z kategorie {theme}. Pouze slovo, bez uvozovek a vysvětlení.";
+    }
 
     public static async Task<string?> GetWordAsync(string provider, string apiKey)
     {
@@ -19,36 +28,24 @@ public static class AiWordService
             _ => null
         };
     }
-    public class RateLimitException : Exception
-    {
-        public TimeSpan RetryAfter { get; }
 
-        public RateLimitException(TimeSpan retryAfter)
-            : base($"Limit vyčerpán. Zkuste za {retryAfter.Seconds} s.")
-        {
-            RetryAfter = retryAfter;
-        }
-    }
-
-    // ---------- GEMINI ----------
     private static async Task<string?> FromGemini(string apiKey)
     {
         if (!GeminiLimiter.TryAcquire(out var retryAfter))
-            throw new RateLimitException(retryAfter);
+            throw new Exception($"Limit vyčerpán. Zkuste za {retryAfter.Seconds}s");
 
         Environment.SetEnvironmentVariable("GOOGLE_API_KEY", apiKey);
 
         using var client = new Google.GenAI.Client();
         var response = await client.Models.GenerateContentAsync(
             model: "gemini-3-flash-preview",
-            contents: "Vrať jedno české slovo bez diakritiky pro hru šibenice. Jen slovo."
+            contents: BuildPrompt()
         );
 
         string? text = response?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
         return CleanWord(text);
     }
 
-    // ---------- CHATGPT ----------
     private static async Task<string?> FromChatGPT(string apiKey)
     {
         using var client = new HttpClient();
@@ -58,8 +55,8 @@ public static class AiWordService
         var payload = new
         {
             model = "gpt-4.1-mini",
-            input = "Vrať jedno české slovo bez diakritiky pro hru šibenice. Jen slovo.",
-            temperature = 0.8
+            input = BuildPrompt(),
+            temperature = 1.1
         };
 
         var response = await client.PostAsJsonAsync(
@@ -71,19 +68,11 @@ public static class AiWordService
 
         var json = await response.Content.ReadFromJsonAsync<dynamic?>();
         string? raw = null;
-        try
-        {
-            raw = json?.output?[0]?.content?[0]?.text as string;
-        }
-        catch
-        {
-            raw = null;
-        }
+        try { raw = json?.output?[0]?.content?[0]?.text as string; } catch { }
 
         return CleanWord(raw);
     }
 
-    // ---------- CLAUDE ----------
     private static async Task<string?> FromClaude(string apiKey)
     {
         using var client = new HttpClient();
@@ -94,10 +83,10 @@ public static class AiWordService
         {
             model = "claude-3-haiku-20240307",
             max_tokens = 20,
-            temperature = 0.8,
+            temperature = 1.0,
             messages = new[]
             {
-                new { role = "user", content = "Vrať jedno české slovo bez diakritiky pro hru šibenice. Jen slovo." }
+                new { role = "user", content = BuildPrompt() }
             }
         };
 
@@ -110,47 +99,24 @@ public static class AiWordService
 
         var json = await response.Content.ReadFromJsonAsync<dynamic?>();
         string? raw = null;
-        try
-        {
-            raw = json?.content?[0]?.text as string;
-        }
-        catch
-        {
-            raw = null;
-        }
+        try { raw = json?.content?[0]?.text as string; } catch { }
 
         return CleanWord(raw);
     }
 
-    // Normalize and extract a single ASCII word (no diacritics). Returns null if no valid word.
     private static string? CleanWord(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
 
-        // Trim and remove surrounding quotes/punctuation
-        var s = raw.Trim().Trim('"', '\'', '\n', '\r');
+        var s = raw.Trim().Trim('"', '\'', '.', ',', '!', '?', '\n', '\r');
 
-        // Remove diacritics
-        s = RemoveDiacritics(s);
+        // regex zahrnuje česká písmena
+        var m = System.Text.RegularExpressions.Regex.Match(
+            s,
+            @"[a-záčďéěíňóřšťúůýž]+",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        );
 
-        // Lowercase and find first alpha token
-        s = s.ToLowerInvariant();
-        var m = System.Text.RegularExpressions.Regex.Match(s, "[a-z]+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (!m.Success) return null;
-        return m.Value;
-    }
-
-    private static string RemoveDiacritics(string text)
-    {
-        if (string.IsNullOrEmpty(text)) return text;
-        var normalized = text.Normalize(System.Text.NormalizationForm.FormD);
-        var sb = new System.Text.StringBuilder();
-        foreach (var ch in normalized)
-        {
-            var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
-            if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
-                sb.Append(ch);
-        }
-        return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        return m.Success ? m.Value : null;
     }
 }

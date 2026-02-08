@@ -13,6 +13,11 @@ public partial class ConnectionAI : ContentPage
         ProviderPicker.SelectedIndex = 0;
         LoadConnections();
     }
+    private async void OnInstructionClicked(object sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new Instruction());
+    }
+
 
     // ===== MODELY =====
     private class ApiConnectionItem

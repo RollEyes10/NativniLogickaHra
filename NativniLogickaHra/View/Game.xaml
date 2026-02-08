@@ -19,11 +19,19 @@
            HorizontalOptions="Center"/>
 
         <Entry x:Name="entGuess"
-           Placeholder="Zadej písmeno"/>
+           Placeholder="Zadej písmeno"
+           MaxLength="1"
+           ReturnType="Done"
+           Completed="OnGuessCompleted" />
+
 
         <Button Text="Hádej"
-            Clicked="OnGuessClicked"/>
+           Clicked="OnGuessCompleted"/>
 
+        <Label x:Name="lblWrongLetters"
+           FontSize="16"
+           TextColor="Red"
+           HorizontalOptions="Center"
+           Text="Špatně uhodnutá písmena: "/>
     </VerticalStackLayout>
-
 </ContentPage>

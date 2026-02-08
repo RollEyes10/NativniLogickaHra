@@ -84,6 +84,9 @@
 	  <Compile Update="View\ConnectionAI.xaml.cs">
 	    <DependentUpon>ConnectionAI.xaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="View\instruction.xaml.cs">
+	    <DependentUpon>Instruction.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="View\SettingsPage.xaml.cs">
 	    <DependentUpon>SettingsPage.xaml</DependentUpon>
 	  </Compile>
@@ -101,6 +104,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="View\ConnectionAI.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="View\Instruction.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="View\SettingsPage.xaml">

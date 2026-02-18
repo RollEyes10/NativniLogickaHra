@@ -1,111 +1,54 @@
-name: Publish release artifacts
+name: Build MAUI App
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch: {}
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build Windows self-contained EXE
+  build:
+
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 8.0.x
 
       - name: Install MAUI workload
-        run: dotnet workload install maui --skip-manifest-update
+        run: dotnet workload install maui
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
-      - name: Publish self-contained single-file EXE (win-x64)
-        run: |
-          dotnet publish -c Release -f net10-windows10.0.19041.0 -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -p:IncludeAllContentForSelfExtract=true -o ./publish/windows
+      # =========================
+      # Windows EXE build
+      # =========================
+      - name: Build Windows
+        run: dotnet publish -f net8.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
 
-      - name: Zip published EXE
-        run: |
-          powershell -Command "Compress-Archive -Path publish/windows/* -DestinationPath publish/NativniLogickaHra-win-x64.zip -Force"
+      # =========================
+      # Android APK build
+      # =========================
+      - name: Build Android
+        run: dotnet publish -f net8.0-android -c Release -o ./artifacts/android
 
-      - name: Upload Windows artifact
+      # =========================
+      # Upload artifacts
+      # =========================
+      - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NativniLogickaHra-win-x64
-          path: publish/NativniLogickaHra-win-x64.zip
+          name: windows-build
+          path: ./artifacts/windows
 
-      - name: Create GitHub Release (if tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload release asset (Windows)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: publish/NativniLogickaHra-win-x64.zip
-          asset_name: NativniLogickaHra-win-x64.zip
-          asset_content_type: application/zip
-
-  build-android:
-    name: Build Android APK/AAB
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Install MAUI workload
-        run: dotnet workload install maui --skip-manifest-update
-
-      - name: Restore
-        run: dotnet restore
-
-      - name: Publish Android (AAB)
-        run: |
-          dotnet publish -c Release -f net10-android -p:AndroidPackageFormat=aab -o ./publish/android || true
-
-      - name: Publish Android (APK)
-        run: |
-          dotnet publish -c Release -f net10-android -p:AndroidPackageFormat=apk -o ./publish/android || true
-
-      - name: Zip Android artifacts
-        run: |
-          mkdir -p publish
-          if [ -d "publish/android" ]; then zip -r publish/NativniLogickaHra-android.zip publish/android; else touch publish/NativniLogickaHra-android.zip; fi
-
-      - name: Upload Android artifact
+      - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NativniLogickaHra-android
-          path: publish/NativniLogickaHra-android.zip
-
-      - name: Attach Android to release (if tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: publish/NativniLogickaHra-android.zip
-          asset_name: NativniLogickaHra-android.zip
-          asset_content_type: application/zip
+          name: android-build
+          path: ./artifacts/android

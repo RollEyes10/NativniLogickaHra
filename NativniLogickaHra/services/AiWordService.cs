@@ -1,5 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Linq;
+using System.Text.Json;
+using NativniLogickaHra.Utils;
 
 namespace NativniLogickaHra.Services;
 
@@ -20,20 +22,28 @@ public static class AiWordService
 
     public static async Task<string?> GetWordAsync(string provider, string apiKey)
     {
-        return provider switch
+        Logger.Log($"GetWordAsync start - provider: {provider}");
+        try
         {
-            "Gemini" => await FromGemini(apiKey),
-            "ChatGPT" => await FromChatGPT(apiKey),
-            "Claude" => await FromClaude(apiKey),
-            _ => null
-        };
+            return provider switch
+            {
+                "Gemini" => await FromGemini(apiKey),
+                "ChatGPT" => await FromChatGPT(apiKey),
+                "Claude" => await FromClaude(apiKey),
+                _ => null
+            };
+        }
+        finally
+        {
+            Logger.Log($"GetWordAsync end - provider: {provider}");
+        }
     }
 
     private static async Task<string?> FromGemini(string apiKey)
     {
         if (!GeminiLimiter.TryAcquire(out var retryAfter))
             throw new Exception($"Limit vyčerpán. Zkuste za {retryAfter.Seconds}s");
-
+        Logger.Log("FromGemini: calling Gemini SDK");
         Environment.SetEnvironmentVariable("GOOGLE_API_KEY", apiKey);
 
         using var client = new Google.GenAI.Client();
@@ -43,6 +53,7 @@ public static class AiWordService
         );
 
         string? text = response?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+        Logger.Log($"FromGemini response: {text}");
         return CleanWord(text);
     }
 
@@ -59,18 +70,44 @@ public static class AiWordService
             temperature = 1.1
         };
 
+        Logger.Log("FromChatGPT: sending request");
+
         var response = await client.PostAsJsonAsync(
             "https://api.openai.com/v1/responses",
             payload
         );
 
+        var raw = await response.Content.ReadAsStringAsync();
+        Logger.Log($"FromChatGPT raw response: {raw}");
+
         if (!response.IsSuccessStatusCode) return null;
 
-        var json = await response.Content.ReadFromJsonAsync<dynamic?>();
-        string? raw = null;
-        try { raw = json?.output?[0]?.content?[0]?.text as string; } catch { }
+        try
+        {
+            var doc = JsonDocument.Parse(raw);
+            string? extracted = null;
+            try
+            {
+                var root = doc.RootElement;
+                if (root.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Array && output.GetArrayLength() > 0)
+                {
+                    var first = output[0];
+                    if (first.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array && content.GetArrayLength() > 0)
+                    {
+                        var c0 = content[0];
+                        if (c0.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String)
+                            extracted = textEl.GetString();
+                    }
+                }
+            }
+            catch { }
 
-        return CleanWord(raw);
+            return CleanWord(extracted);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static async Task<string?> FromClaude(string apiKey)
@@ -90,18 +127,40 @@ public static class AiWordService
             }
         };
 
+        Logger.Log("FromClaude: sending request");
+
         var response = await client.PostAsJsonAsync(
             "https://api.anthropic.com/v1/messages",
             payload
         );
 
+        var raw = await response.Content.ReadAsStringAsync();
+        Logger.Log($"FromClaude raw response: {raw}");
+
         if (!response.IsSuccessStatusCode) return null;
 
-        var json = await response.Content.ReadFromJsonAsync<dynamic?>();
-        string? raw = null;
-        try { raw = json?.content?[0]?.text as string; } catch { }
+        try
+        {
+            var doc = JsonDocument.Parse(raw);
+            string? extracted = null;
+            try
+            {
+                var root = doc.RootElement;
+                if (root.TryGetProperty("content", out var contents) && contents.ValueKind == JsonValueKind.Array && contents.GetArrayLength() > 0)
+                {
+                    var first = contents[0];
+                    if (first.TryGetProperty("text", out var text) && text.ValueKind == JsonValueKind.String)
+                        extracted = text.GetString();
+                }
+            }
+            catch { }
 
-        return CleanWord(raw);
+            return CleanWord(extracted);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string? CleanWord(string? raw)

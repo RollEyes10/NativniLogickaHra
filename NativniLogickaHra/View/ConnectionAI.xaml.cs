@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using NativniLogickaHra.Utils;
 
 namespace NativniLogickaHra.View;
 
@@ -15,6 +16,7 @@ public partial class ConnectionAI : ContentPage
     }
     private async void OnInstructionClicked(object sender, EventArgs e)
     {
+        Logger.Log("Instruction clicked");
         await Navigation.PushAsync(new Instruction());
     }
 
@@ -29,6 +31,7 @@ public partial class ConnectionAI : ContentPage
     // ===== NAČTENÍ SEZNAMU =====
     private async void LoadConnections()
     {
+        Logger.Log("Loading connections list");
         Connections.Clear();
 
         foreach (var provider in Providers)
@@ -56,6 +59,7 @@ public partial class ConnectionAI : ContentPage
         if (e.CurrentSelection.FirstOrDefault() is not ApiConnectionItem item)
             return;
 
+        Logger.Log($"Connection selected: {item.Provider}");
         ProviderPicker.SelectedItem = item.Provider;
         await LoadSelectedProvider();
     }
@@ -63,6 +67,9 @@ public partial class ConnectionAI : ContentPage
     private async Task LoadSelectedProvider()
     {
         string provider = ProviderPicker.SelectedItem?.ToString() ?? "Gemini";
+
+        // persist currently selected AI provider so other pages (hra) can use it
+        Preferences.Default.Set("SelectedAIProvider", provider);
 
         GeminiModePanel.IsVisible = provider == "Gemini";
 

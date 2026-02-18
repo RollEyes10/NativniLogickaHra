@@ -2,6 +2,7 @@
 
 using NativniLogickaHra;
 using NativniLogickaHra.Services;
+using NativniLogickaHra.Utils;
 
 public partial class Game : ContentPage
 {
@@ -16,6 +17,7 @@ public partial class Game : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        Logger.Log("Game OnAppearing");
         await StartNewGameAsync();
     }
 
@@ -23,23 +25,40 @@ public partial class Game : ContentPage
     {
         wrongLetters.Clear();
         lblStatus.Text = "Načítám slovo…";
+        Logger.Log("StartNewGameAsync - starting new game");
 
-        string provider = "Gemini";
+        // read provider selected in ConnectionAI (fallback to Gemini)
+        string provider = Preferences.Default.Get("SelectedAIProvider", "Gemini");
         string? apiKey = await SecureStorage.Default.GetAsync(provider);
 
         string word = "programovani";
 
-        if (!string.IsNullOrEmpty(apiKey))
+        lblStatus.Text = $"Načítám slovo z: {provider}…";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            lblStatus.Text = $"Chybí API klíč pro {provider}, použito záložní slovo.";
+            Logger.Log($"No API key for provider {provider}");
+        }
+        else
         {
             try
             {
+                Logger.Log($"Calling AiWordService.GetWordAsync for {provider}");
                 var aiWord = await AiWordService.GetWordAsync(provider, apiKey);
+                Logger.Log($"AiWordService result for {provider}: {aiWord}");
                 if (IsValidWord(aiWord))
                     word = aiWord!;
+                else
+                {
+                    lblStatus.Text = "AI vrátila neplatné slovo, použito záložní.";
+                    Logger.Log($"Invalid word from AI: {aiWord}");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                lblStatus.Text = "AI nedostupná, použito záložní slovo.";
+                lblStatus.Text = $"AI nedostupná: {ex.Message}. Použito záložní slovo.";
+                Logger.Log($"AI call failed for {provider}: {ex}");
             }
         }
 

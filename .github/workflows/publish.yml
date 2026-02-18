@@ -1,0 +1,105 @@
+name: Publish build artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    name: Build Windows (publish) and upload to release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish (Windows x64)
+        run: |
+          dotnet publish -c Release -f net10-windows10.0.19041.0 -r win-x64 -o ./publish/windows
+
+      - name: Zip published app
+        run: |
+          powershell -Command "Compress-Archive -Path publish/windows/* -DestinationPath publish/NativniLogickaHra-win-x64.zip -Force"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NativniLogickaHra-win-x64
+          path: publish/NativniLogickaHra-win-x64.zip
+
+      - name: Create GitHub Release (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: "Automaticky vytvořená release s publikovanou Windows verzí."
+
+      - name: Upload release asset (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: publish/NativniLogickaHra-win-x64.zip
+          asset_name: NativniLogickaHra-win-x64.zip
+          asset_content_type: application/zip
+
+  # Optional Android build (unsigned APK). Requires Android SDK on runner and may need additional setup.
+  build-android:
+    name: Build Android (unsigned APK)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish Android (APK - may be unsigned)
+        run: |
+          dotnet publish -c Release -f net10-android -p:AndroidPackageFormat=apk -o ./publish/android || true
+
+      - name: Zip Android publish
+        run: |
+          powershell -Command "if(Test-Path publish/android) { Compress-Archive -Path publish/android/* -DestinationPath publish/NativniLogickaHra-android.zip -Force } else { New-Item -Path publish/NativniLogickaHra-android.zip -ItemType File -Force }"
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NativniLogickaHra-android
+          path: publish/NativniLogickaHra-android.zip
+
+      - name: Attach Android to release (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: publish/NativniLogickaHra-android.zip
+          asset_name: NativniLogickaHra-android.zip
+          asset_content_type: application/zip

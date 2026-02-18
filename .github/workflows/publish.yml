@@ -1,4 +1,4 @@
-name: Publish build artifacts
+name: Publish release artifacts
 
 on:
   push:
@@ -8,11 +8,10 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows (publish) and upload to release
+    name: Build Windows self-contained EXE
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -25,15 +24,15 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish (Windows x64)
+      - name: Publish self-contained single-file EXE (win-x64)
         run: |
-          dotnet publish -c Release -f net10-windows10.0.19041.0 -r win-x64 -o ./publish/windows
+          dotnet publish -c Release -f net10-windows10.0.19041.0 -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -p:IncludeAllContentForSelfExtract=true -o ./publish/windows
 
-      - name: Zip published app
+      - name: Zip published EXE
         run: |
           powershell -Command "Compress-Archive -Path publish/windows/* -DestinationPath publish/NativniLogickaHra-win-x64.zip -Force"
 
-      - name: Upload artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: NativniLogickaHra-win-x64
@@ -41,15 +40,13 @@ jobs:
 
       - name: Create GitHub Release (if tag)
         if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: "Automaticky vytvořená release s publikovanou Windows verzí."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload release asset (if tag)
+      - name: Upload release asset (Windows)
         if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-release-asset@v1
         env:
@@ -60,13 +57,17 @@ jobs:
           asset_name: NativniLogickaHra-win-x64.zip
           asset_content_type: application/zip
 
-  # Optional Android build (unsigned APK). Requires Android SDK on runner and may need additional setup.
   build-android:
-    name: Build Android (unsigned APK)
-    runs-on: windows-latest
+    name: Build Android APK/AAB
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -79,13 +80,18 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Publish Android (APK - may be unsigned)
+      - name: Publish Android (AAB)
+        run: |
+          dotnet publish -c Release -f net10-android -p:AndroidPackageFormat=aab -o ./publish/android || true
+
+      - name: Publish Android (APK)
         run: |
           dotnet publish -c Release -f net10-android -p:AndroidPackageFormat=apk -o ./publish/android || true
 
-      - name: Zip Android publish
+      - name: Zip Android artifacts
         run: |
-          powershell -Command "if(Test-Path publish/android) { Compress-Archive -Path publish/android/* -DestinationPath publish/NativniLogickaHra-android.zip -Force } else { New-Item -Path publish/NativniLogickaHra-android.zip -ItemType File -Force }"
+          mkdir -p publish
+          if [ -d "publish/android" ]; then zip -r publish/NativniLogickaHra-android.zip publish/android; else touch publish/NativniLogickaHra-android.zip; fi
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4

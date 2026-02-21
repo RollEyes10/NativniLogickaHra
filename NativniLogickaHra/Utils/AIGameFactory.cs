@@ -4,7 +4,6 @@ using NativniLogickaHra.Utils;
 
 public class AIGameFactory
 {
-    private const string FallbackWord = "programovani";
 
     public async Task<Hangman> CreateHangmanGameAsync(string provider)
     {
@@ -17,7 +16,6 @@ public class AIGameFactory
             ? Preferences.Default.Get("VowelsCount", 3)
             : 0;
 
-        bool vowelsEnabled = vowelsCount > 0;
         int requiredConsonants = Preferences.Default.Get("RequiredConsonants", 3);
 
         // ── API klíč ─────────────────────────────────────────────────────────
@@ -33,39 +31,32 @@ public class AIGameFactory
         if (string.IsNullOrEmpty(apiKey))
             throw new Exception($"Chybí API klíč pro {provider}!");
 
-        // ── Získání slova přes AiWordService (obsahuje WordFilter + WordHistory) ──
-        string word = FallbackWord;
+        // ── Výběr slova podle obtížnosti hráče ───────────────────────────────
+        string word = await WordSelector.GetWordForPlayerAsync(provider, apiKey);
 
-        string? aiWord = await AiWordService.GetWordAsync(provider, apiKey);
-
-        if (!string.IsNullOrWhiteSpace(aiWord))
-        {
-            // Volitelně: přeskoč slova, která byla nedávno použita
-            if (WordHistory.WasRecentlyUsed(aiWord))
-            {
-                Logger.Log($"AIGameFactory: slovo '{aiWord}' bylo nedávno použito, zkouším znovu");
-
-                // Jeden další pokus o jiné slovo
-                string? retryWord = await AiWordService.GetWordAsync(provider, apiKey);
-                if (!string.IsNullOrWhiteSpace(retryWord) && !WordHistory.WasRecentlyUsed(retryWord))
-                    aiWord = retryWord;
-            }
-
-            if (!string.IsNullOrWhiteSpace(aiWord))
-                word = aiWord;
-        }
-        else
-        {
-            Logger.Log($"AIGameFactory: AI nevrátila platné slovo, použit fallback '{FallbackWord}'");
-        }
+        Logger.Log($"AIGameFactory: word='{word}', difficulty={PlayerStats.Difficulty}");
 
         // ── Vytvoření hry ────────────────────────────────────────────────────
         return new Hangman(
             word.Trim().ToLower(),
             lives,
-            vowelsEnabled,
+            vowelsEnabled: vowelsCount > 0,
             vowelsCount,
             requiredConsonants
         );
+    }
+
+    /// <summary>
+    /// Zavolej po každé dokončené hře, aby se aktualizovala obtížnost.
+    /// </summary>
+    public static void RecordResult(bool playerWon)
+    {
+        if (playerWon)
+            PlayerStats.RecordWin();
+        else
+            PlayerStats.RecordLoss();
+
+        Logger.Log($"AIGameFactory: result recorded — won={playerWon}, " +
+                   $"newDifficulty={PlayerStats.Difficulty}, streak={PlayerStats.Streak}");
     }
 }

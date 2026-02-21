@@ -1,4 +1,5 @@
 ﻿using NativniLogickaHra.Models;
+using NativniLogickaHra.Utils;
 
 namespace NativniLogickaHra.View;
 
@@ -41,21 +42,47 @@ public partial class SettingsPage : ContentPage
             Preferences.Default.Get("RequiredConsonants", 3);
 
         UpdateLabels();
+        UpdateAiStats();   // ← zobrazí statistiky při každém otevření stránky
 
         isInitializing = false;
     }
+
+    // ── Pomocné aktualizace ──────────────────────────────────────────────────
 
     private void UpdateLabels()
     {
         VolumeLabel.Text = $"Hlasitost: {Math.Round(VolumeSlider.Value)} %";
 
-        if (LivesEnabledSwitch.IsToggled)
-            LivesLabel.Text = $"Počet životů: {Math.Round(LivesSlider.Value)}";
-        else
-            LivesLabel.Text = "Počet životů: ∞";
+        LivesLabel.Text = LivesEnabledSwitch.IsToggled
+            ? $"Počet životů: {Math.Round(LivesSlider.Value)}"
+            : "Počet životů: ∞";
 
-        RequiredConsonantsLabel.Text = $"Souhlásky pro povolení samohlásek: {Math.Round(RequiredConsonantsSlider.Value)}";
+        RequiredConsonantsLabel.Text =
+            $"Souhlásky pro povolení samohlásek: {Math.Round(RequiredConsonantsSlider.Value)}";
     }
+
+    private void UpdateAiStats()
+    {
+        // Úroveň jako text s barvou
+        (string text, Color color) = PlayerStats.Difficulty switch
+        {
+            1 => ("Easy 🟢", Color.FromArgb("#27AE60")),
+            2 => ("Medium 🟡", Color.FromArgb("#F39C12")),
+            _ => ("Hard 🔴", Color.FromArgb("#E74C3C"))
+        };
+
+        AiDifficultyLabel.Text = text;
+        AiDifficultyLabel.TextColor = color;
+
+        StatsWinsLabel.Text = PlayerStats.Wins.ToString();
+        StatsLossesLabel.Text = PlayerStats.Losses.ToString();
+        StatsStreakLabel.Text = PlayerStats.Streak.ToString();
+        StatsWinRateLabel.Text = PlayerStats.TotalGames == 0
+            ? "–"
+            : $"{PlayerStats.WinRate:P0}";
+    }
+
+    // ── Handlery sliderů / switchů ───────────────────────────────────────────
 
     private void OnVolumeChanged(object sender, ValueChangedEventArgs e)
     {
@@ -78,30 +105,34 @@ public partial class SettingsPage : ContentPage
         }
     }
 
-    private async void OnSaveClicked(object sender, EventArgs e)
+    public void OnRequiredConsonantsChanged(object sender, ValueChangedEventArgs e)
     {
-        Preferences.Default.Set("Language", LanguagePicker.SelectedIndex);
-        Preferences.Default.Set("Volume", (int)VolumeSlider.Value);
-        Preferences.Default.Set("Difficulty", DifficultyPicker.SelectedIndex);
-
-        // don't re-apply preset on save — user selection should be kept as-is
-
-        Preferences.Default.Set("LivesEnabled", LivesEnabledSwitch.IsToggled);
-        Preferences.Default.Set(
-            "LivesCount",
-            LivesEnabledSwitch.IsToggled ? (int)LivesSlider.Value : 0
-        );
-
-        Preferences.Default.Set("RequiredConsonants", (int)RequiredConsonantsSlider.Value);
-
-        await Navigation.PopAsync();
+        RequiredConsonantsLabel.Text =
+            $"Souhlásky pro povolení samohlásek: {Math.Round(e.NewValue)}";
     }
+
+    // ── Reset statistik ──────────────────────────────────────────────────────
+
+    private async void OnResetStatsClicked(object sender, EventArgs e)
+    {
+        bool confirm = await DisplayAlert(
+            "Resetovat statistiky",
+            "Opravdu chceš smazat všechny statistiky a vrátit obtížnost na Easy?",
+            "Ano, resetovat", "Zrušit");
+
+        if (!confirm) return;
+
+        PlayerStats.Reset();
+        UpdateAiStats();
+
+        await DisplayAlert("Hotovo", "Statistiky byly resetovány.", "OK");
+    }
+
+    // ── Uložení a obtížnostní předvolby ─────────────────────────────────────
 
     private void OnDifficultyChanged(object sender, EventArgs e)
     {
-        // only apply presets when user actively changes DifficultyPicker
-        if (DifficultyPicker == null) return;
-        if (isInitializing) return;
+        if (DifficultyPicker == null || isInitializing) return;
 
         var diff = (Difficulty)DifficultyPicker.SelectedIndex;
 
@@ -129,9 +160,18 @@ public partial class SettingsPage : ContentPage
         UpdateLabels();
     }
 
-    // Make the handler public so the XAML loader (and hot reload) can resolve it by name and signature
-    public void OnRequiredConsonantsChanged(object sender, Microsoft.Maui.Controls.ValueChangedEventArgs e)
+    private async void OnSaveClicked(object sender, EventArgs e)
     {
-        RequiredConsonantsLabel.Text = $"Souhlásky pro povolení samohlásek: {Math.Round(e.NewValue)}";
+        Preferences.Default.Set("Language", LanguagePicker.SelectedIndex);
+        Preferences.Default.Set("Volume", (int)VolumeSlider.Value);
+        Preferences.Default.Set("Difficulty", DifficultyPicker.SelectedIndex);
+
+        Preferences.Default.Set("LivesEnabled", LivesEnabledSwitch.IsToggled);
+        Preferences.Default.Set("LivesCount",
+            LivesEnabledSwitch.IsToggled ? (int)LivesSlider.Value : 0);
+
+        Preferences.Default.Set("RequiredConsonants", (int)RequiredConsonantsSlider.Value);
+
+        await Navigation.PopAsync();
     }
 }

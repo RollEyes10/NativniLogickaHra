@@ -33,7 +33,7 @@
                         ValueChanged="OnVolumeChanged" />
             </VerticalStackLayout>
 
-            <!-- Obtížnost -->
+            <!-- Obtížnost (manuální) -->
             <VerticalStackLayout>
                 <Label Text="Obtížnost:" />
                 <Picker x:Name="DifficultyPicker" SelectedIndexChanged="OnDifficultyChanged">
@@ -45,6 +45,54 @@
                     </Picker.Items>
                 </Picker>
             </VerticalStackLayout>
+
+            <!-- AI adaptivní obtížnost -->
+            <Frame Padding="15"
+                   CornerRadius="10"
+                   BorderColor="LightGray"
+                   BackgroundColor="#F5F5F5">
+                <VerticalStackLayout Spacing="8">
+
+                    <Label Text="Adaptivní obtížnost AI"
+                           FontAttributes="Bold"
+                           FontSize="15" />
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Aktuální úroveň:" VerticalOptions="Center" />
+                        <Label x:Name="AiDifficultyLabel"
+                               FontAttributes="Bold"
+                               FontSize="15"
+                               VerticalOptions="Center"
+                               TextColor="#2D89EF" />
+                    </HorizontalStackLayout>
+
+                    <HorizontalStackLayout Spacing="20">
+                        <VerticalStackLayout>
+                            <Label Text="Výhry" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
+                            <Label x:Name="StatsWinsLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Prohry" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
+                            <Label x:Name="StatsLossesLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Série" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
+                            <Label x:Name="StatsStreakLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout>
+                            <Label Text="Úspěšnost" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
+                            <Label x:Name="StatsWinRateLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <Button Text="Resetovat statistiky"
+                            BackgroundColor="#E74C3C"
+                            TextColor="White"
+                            CornerRadius="8"
+                            Clicked="OnResetStatsClicked" />
+
+                </VerticalStackLayout>
+            </Frame>
 
             <!-- Životy -->
             <VerticalStackLayout>
@@ -62,7 +110,7 @@
                         Value="5"
                         ValueChanged="OnLivesChanged" />
             </VerticalStackLayout>
-            
+
             <!-- Samohlásky -->
             <VerticalStackLayout>
                 <Label x:Name="RequiredConsonantsLabel" Text="Souhlásky pro povolení samohlásek: 3" />

@@ -65,7 +65,7 @@ public static class AiWordService
 
         using var client = new Google.GenAI.Client();
         var response = await client.Models.GenerateContentAsync(
-            model: "gemini-3-flash-preview",
+            model: AiConfig.GeminiModel,
             contents: BuildPrompt()
         );
 
@@ -82,7 +82,7 @@ public static class AiWordService
 
         var payload = new
         {
-            model = "gpt-4.1-mini",
+            model = AiConfig.ChatGptModel,
             input = BuildPrompt(),
             temperature = 1.1
         };
@@ -135,7 +135,7 @@ public static class AiWordService
 
         var payload = new
         {
-            model = "claude-3-haiku-20240307",
+            model = AiConfig.ClaudeModel,
             max_tokens = 20,
             temperature = 1.0,
             messages = new[]

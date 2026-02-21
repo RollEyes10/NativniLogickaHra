@@ -1,54 +1,35 @@
-name: Build MAUI App
+name: Build MAUI .NET 10
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      # 🔥 .NET 10 PREVIEW
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
+          include-prerelease: true
 
-      - name: Install MAUI workload
-        run: dotnet workload install maui
+      # 🔥 MAUI preview workload
+      - run: dotnet workload install maui --include-previews
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - run: dotnet restore
 
-      # =========================
-      # Windows EXE build
-      # =========================
-      - name: Build Windows
-        run: dotnet publish -f net8.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
+      # Windows
+      - run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
 
-      # =========================
-      # Android APK build
-      # =========================
-      - name: Build Android
-        run: dotnet publish -f net8.0-android -c Release -o ./artifacts/android
+      # Android
+      - run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android
 
-      # =========================
-      # Upload artifacts
-      # =========================
-      - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: ./artifacts/windows
-
-      - name: Upload Android Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-build
-          path: ./artifacts/android
+          name: build-output
+          path: ./artifacts

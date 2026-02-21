@@ -9,6 +9,8 @@ public static class AiWordService
 {
     private static readonly RateLimiter GeminiLimiter = new RateLimiter(5, TimeSpan.FromMinutes(1));
 
+    private const int MaxRetries = 3; // kolikrát zkusit znovu při nevhodném slově
+
     private static readonly string[] Themes =
     {
         "zvíře", "předmět", "povolání", "příroda", "město", "technologie", "sport", "jídlo", "činnost", "náhodné slovo"
@@ -25,13 +27,28 @@ public static class AiWordService
         Logger.Log($"GetWordAsync start - provider: {provider}");
         try
         {
-            return provider switch
+            for (int attempt = 1; attempt <= MaxRetries; attempt++)
             {
-                "Gemini" => await FromGemini(apiKey),
-                "ChatGPT" => await FromChatGPT(apiKey),
-                "Claude" => await FromClaude(apiKey),
-                _ => null
-            };
+                string? word = provider switch
+                {
+                    "Gemini" => await FromGemini(apiKey),
+                    "ChatGPT" => await FromChatGPT(apiKey),
+                    "Claude" => await FromClaude(apiKey),
+                    _ => null
+                };
+
+                if (WordFilter.IsAllowed(word))
+                {
+                    Logger.Log($"GetWordAsync: accepted word '{word}' on attempt {attempt}");
+                    WordHistory.Add(word);
+                    return word;
+                }
+
+                Logger.Log($"GetWordAsync: word '{word}' rejected by filter (attempt {attempt}/{MaxRetries})");
+            }
+
+            Logger.Log("GetWordAsync: all attempts returned filtered words, returning null");
+            return null;
         }
         finally
         {

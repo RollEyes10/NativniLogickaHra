@@ -30,7 +30,7 @@ public partial class Game : ContentPage
         // read provider selected in ConnectionAI (fallback to Gemini)
         string provider = Preferences.Default.Get("SelectedAIProvider", "Gemini");
         string? apiKey = await SecureStorage.Default.GetAsync(provider);
-
+        Logger.Log($"SelectedAIProvider: {provider}, API key exists: {!string.IsNullOrEmpty(apiKey)}");
         string word = "programovani";
 
         lblStatus.Text = $"Načítám slovo z: {provider}…";

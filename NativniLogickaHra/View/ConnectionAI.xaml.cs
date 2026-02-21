@@ -87,6 +87,9 @@ public partial class ConnectionAI : ContentPage
 
     private async void OnProviderChanged(object sender, EventArgs e)
     {
+        var provider = ProviderPicker.SelectedItem?.ToString() ?? "Gemini";
+        Logger.Log($"Provider changed to: {provider}");
+        Preferences.Default.Set("SelectedAIProvider", provider); // nutné pro hru
         await LoadSelectedProvider();
     }
 

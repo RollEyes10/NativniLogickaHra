@@ -1,37 +1,57 @@
-name: Build & Release MAUI .NET 10
+name: MAUI .NET 10 Release
 
 on:
   push:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # 🔥 .NET 10 PREVIEW
-      - uses: actions/setup-dotnet@v4
+      # 🔥 .NET 10 Preview
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
           include-prerelease: true
 
-      - run: dotnet workload install maui --include-previews
-      - run: dotnet restore
+      - name: Install MAUI workload
+        run: dotnet workload install maui --include-previews
 
-      # Windows
-      - run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
+      - name: Restore
+        run: dotnet restore
 
-      # Android
-      - run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android
+      # 🏗 Windows Build
+      - name: Publish Windows
+        run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
 
+      # 📱 Android Build
+      - name: Publish Android
+        run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android
+
+      # 📦 Zip Windows
+      - name: Zip Windows Build
+        run: Compress-Archive -Path ./artifacts/windows/* -DestinationPath ./artifacts/NativniLogickaHra-win.zip
+
+      # 📦 Zip Android
+      - name: Zip Android Build
+        run: Compress-Archive -Path ./artifacts/android/* -DestinationPath ./artifacts/NativniLogickaHra-android.zip
+
+      # 🚀 Create Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          generate_release_notes: true
           files: |
-            ./artifacts/windows/**
-            ./artifacts/android/**
+            ./artifacts/NativniLogickaHra-win.zip
+            ./artifacts/NativniLogickaHra-android.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

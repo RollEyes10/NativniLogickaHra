@@ -1,55 +1,42 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:utils="clr-namespace:NativniLogickaHra.Utils"
              x:Class="NativniLogickaHra.View.ConnectionAI"
-             Title="Správa API klíčů">
+             Title="{Binding [Connection_Title], Source={x:Static utils:LocalizationHelper.Instance}}">
 
     <ScrollView>
         <VerticalStackLayout Padding="25" Spacing="20">
-            <Button Text="📘 Návod – jak přidat API klíč"
-                Clicked="OnInstructionClicked"
-                BackgroundColor="#2D89EF"
-                TextColor="White"/>
-            
-            <!-- ===== SEZNAM PŘIPOJENÍ ===== -->
-            <Label Text="Uložená připojení"
-                   FontSize="22"
-                   FontAttributes="Bold"/>
+
+            <Button Text="{Binding [Connection_InstructionBtn], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    Clicked="OnInstructionClicked"
+                    BackgroundColor="#2D89EF"
+                    TextColor="White"/>
+
+            <Label Text="{Binding [Connection_SavedConnections], Source={x:Static utils:LocalizationHelper.Instance}}"
+                   FontSize="22" FontAttributes="Bold"/>
 
             <CollectionView x:Name="ConnectionsList"
                             SelectionMode="Single"
                             SelectionChanged="OnConnectionSelected">
-
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Padding="12"
-                               Margin="0,5"
-                               BorderColor="LightGray"
-                               CornerRadius="10">
-
+                        <Border Padding="12" Margin="0,5" StrokeThickness="1" StrokeShape="RoundRectangle 10"
+                                Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#444444}">
                             <VerticalStackLayout>
-                                <Label Text="{Binding Provider}"
-                                       FontSize="16"
-                                       FontAttributes="Bold"/>
-
-                                <Label Text="{Binding Status}"
-                                       FontSize="12"
-                                       TextColor="Gray"/>
+                                <Label Text="{Binding Provider}" FontSize="16" FontAttributes="Bold"/>
+                                <Label Text="{Binding Status}"   FontSize="12" TextColor="Gray"/>
                             </VerticalStackLayout>
-
-                        </Frame>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- ===== EDITACE / NOVÝ KLÍČ ===== -->
-            <Label Text="Detail připojení"
-                   FontSize="22"
-                   FontAttributes="Bold"/>
+            <Label Text="{Binding [Connection_Detail], Source={x:Static utils:LocalizationHelper.Instance}}"
+                   FontSize="22" FontAttributes="Bold"/>
 
-            <Label Text="Poskytovatel"/>
-            <Picker x:Name="ProviderPicker"
-                    SelectedIndexChanged="OnProviderChanged">
+            <Label Text="{Binding [Connection_Provider], Source={x:Static utils:LocalizationHelper.Instance}}"/>
+            <Picker x:Name="ProviderPicker" SelectedIndexChanged="OnProviderChanged">
                 <Picker.Items>
                     <x:String>Gemini</x:String>
                     <x:String>ChatGPT</x:String>
@@ -57,33 +44,28 @@
                 </Picker.Items>
             </Picker>
 
-            <Label Text="API klíč"/>
+            <Label Text="{Binding [Connection_ApiKey], Source={x:Static utils:LocalizationHelper.Instance}}"/>
             <Entry x:Name="ApiKeyEntry"
-                   Placeholder="Vložte API klíč"
+                   Placeholder="{Binding [Connection_ApiKeyPlaceholder], Source={x:Static utils:LocalizationHelper.Instance}}"
                    IsPassword="True"/>
 
-            <!-- GEMINI MODE -->
-            <VerticalStackLayout x:Name="GeminiModePanel"
-                                 IsVisible="False"
-                                 Spacing="5">
-
+            <VerticalStackLayout x:Name="GeminiModePanel" IsVisible="False" Spacing="5">
                 <HorizontalStackLayout Spacing="10">
-                    <Label Text="Režim:" VerticalOptions="Center"/>
+                    <Label Text="{Binding [Connection_GeminiMode], Source={x:Static utils:LocalizationHelper.Instance}}"
+                           VerticalOptions="Center"/>
                     <CheckBox x:Name="PaidCheckBox"/>
-                    <Label Text="PAID (bez omezení)" VerticalOptions="Center"/>
+                    <Label Text="{Binding [Connection_GeminiPaid], Source={x:Static utils:LocalizationHelper.Instance}}"
+                           VerticalOptions="Center"/>
                 </HorizontalStackLayout>
-
-                <Label Text="FREE: 5 dotazů / min | PAID: bez omezení"
-                       FontSize="12"
-                       TextColor="Gray"/>
+                <Label Text="{Binding [Connection_GeminiInfo], Source={x:Static utils:LocalizationHelper.Instance}}"
+                       FontSize="12" TextColor="Gray"/>
             </VerticalStackLayout>
 
-            <Button Text="Uložit / Aktualizovat"
+            <Button Text="{Binding [Connection_Save], Source={x:Static utils:LocalizationHelper.Instance}}"
                     Clicked="OnSaveKeyClicked"/>
 
-            <Button Text="Smazat připojení"
-                    BackgroundColor="Red"
-                    TextColor="White"
+            <Button Text="{Binding [Connection_Delete], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    BackgroundColor="Red" TextColor="White"
                     Clicked="OnDeleteKeyClicked"/>
 
             <Label x:Name="StatusLabel"

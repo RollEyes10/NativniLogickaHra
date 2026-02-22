@@ -40,7 +40,7 @@ public static class AiWordService
                 if (WordFilter.IsAllowed(word))
                 {
                     Logger.Log($"GetWordAsync: accepted word '{word}' on attempt {attempt}");
-                    WordHistory.Add(word);
+                    WordHistory.Add(word!);
                     return word;
                 }
 

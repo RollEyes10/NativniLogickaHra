@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NativniLogickaHra.Utils;
 
 namespace NativniLogickaHra
 {
@@ -17,10 +18,16 @@ namespace NativniLogickaHra
                 });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // ── Inicializuj lokalizaci hned po startu ──
+            int language = Preferences.Default.Get("Language", 0);
+            LocalizationHelper.SetLanguage(language);
+
+            return app;
         }
     }
 }

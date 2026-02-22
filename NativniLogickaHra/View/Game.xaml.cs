@@ -24,41 +24,31 @@ public partial class Game : ContentPage
     private async Task StartNewGameAsync()
     {
         wrongLetters.Clear();
-        lblStatus.Text = "Načítám slovo…";
-        Logger.Log("StartNewGameAsync - starting new game");
+        lblStatus.Text = L.Get("Game_Loading");
 
-        // read provider selected in ConnectionAI (fallback to Gemini)
         string provider = Preferences.Default.Get("SelectedAIProvider", "Gemini");
         string? apiKey = await SecureStorage.Default.GetAsync(provider);
-        Logger.Log($"SelectedAIProvider: {provider}, API key exists: {!string.IsNullOrEmpty(apiKey)}");
         string word = "programovani";
 
-        lblStatus.Text = $"Načítám slovo z: {provider}…";
+        lblStatus.Text = L.Get("Game_LoadingFrom", provider);
 
         if (string.IsNullOrEmpty(apiKey))
         {
-            lblStatus.Text = $"Chybí API klíč pro {provider}, použito záložní slovo.";
-            Logger.Log($"No API key for provider {provider}");
+            lblStatus.Text = L.Get("Game_NoApiKey", provider);
         }
         else
         {
             try
             {
-                Logger.Log($"Calling AiWordService.GetWordAsync for {provider}");
                 var aiWord = await AiWordService.GetWordAsync(provider, apiKey);
-                Logger.Log($"AiWordService result for {provider}: {aiWord}");
                 if (IsValidWord(aiWord))
                     word = aiWord!;
                 else
-                {
-                    lblStatus.Text = "AI vrátila neplatné slovo, použito záložní.";
-                    Logger.Log($"Invalid word from AI: {aiWord}");
-                }
+                    lblStatus.Text = L.Get("Game_InvalidWord");
             }
             catch (Exception ex)
             {
-                lblStatus.Text = $"AI nedostupná: {ex.Message}. Použito záložní slovo.";
-                Logger.Log($"AI call failed for {provider}: {ex}");
+                lblStatus.Text = L.Get("Game_AIUnavailable", ex.Message);
             }
         }
 
@@ -77,21 +67,8 @@ public partial class Game : ContentPage
     private static bool IsValidWord(string? word)
         => !string.IsNullOrWhiteSpace(word) && word.All(char.IsLetter);
 
-    // 🔥 AUTOMATICKÉ HÁDÁNÍ PŘI PSANÍ
-    private void OnGuessTextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(e.NewTextValue))
-            return;
-
-        DoGuess();
-    }
-
-
-    // 🔥 ENTER = POTVRZENÍ
-    private void OnGuessCompleted(object sender, EventArgs e)
-    {
-        DoGuess();
-    }
+    // Enter nebo tlačítko — obojí volá DoGuess
+    private void OnGuessCompleted(object sender, EventArgs e) => DoGuess();
 
     private void DoGuess()
     {
@@ -114,11 +91,9 @@ public partial class Game : ContentPage
     private void UpdateUI()
     {
         if (hra is null) return;
-
         lblSecretWord.Text = string.Join(" ", hra.SecretWord);
-        lblInfo.Text =
-            $"Souhlásky: {hra.ConsonantsGuessed}/{hra.RequiredConsonants} | Životy: {hra.RemainingAttempts}";
-        lblWrongLetters.Text = "Špatně uhodnutá písmena: " + string.Join(" ", wrongLetters);
+        lblInfo.Text = L.Get("Game_Info", hra.ConsonantsGuessed, hra.RequiredConsonants, hra.RemainingAttempts);
+        lblWrongLetters.Text = L.Get("Game_WrongLetters") + string.Join(" ", wrongLetters);
     }
 
     private async void CheckEndGame()
@@ -127,14 +102,12 @@ public partial class Game : ContentPage
 
         if (!lblSecretWord.Text.Contains('_'))
         {
-            await DisplayAlert("Výhra!", "Uhodl jsi slovo 🎉", "OK");
+            await DisplayAlertAsync(L.Get("Game_Win_Title"), L.Get("Game_Win_Message"), L.Get("Game_Win_Button"));
             await StartNewGameAsync();
         }
         else if (hra.RemainingAttempts <= 0)
         {
-            await DisplayAlert("Prohra",
-                $"Slovo bylo: {hra.TargetWord}",
-                "Znovu");
+            await DisplayAlertAsync(L.Get("Game_Lose_Title"), L.Get("Game_Lose_Message", hra.TargetWord), L.Get("Game_Lose_Button"));
             await StartNewGameAsync();
         }
     }

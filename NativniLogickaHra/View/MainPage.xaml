@@ -1,42 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:utils="clr-namespace:NativniLogickaHra.Utils"
              x:Class="NativniLogickaHra.MainPage">
 
     <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Image
-                Source="background_picture.jpg"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a submarine number ten" />
+        <VerticalStackLayout Padding="30,0" Spacing="25">
 
-            <Label
-                Text="Welcome to hte Hangman power by AI"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+            <Label Text="{Binding [MainPage_Title], Source={x:Static utils:LocalizationHelper.Instance}}"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1" />
 
-            <Button
-                x:Name="StartGameBtn"
-                Text="Start Game" 
-                SemanticProperties.Hint="Starts the logical game"
-                Clicked="OnStartGameClicked"
-                HorizontalOptions="Fill" />
-            <Button
-                x:Name="SettingsBtn"
-                Text="Settings" 
-                SemanticProperties.Hint="Opens the settings page"
-                Clicked="OnSettingsClicked"
-                HorizontalOptions="Fill" />
-            <Button
-                x:Name="ConnectioToAI"
-                Text="Connection to AI" 
-                SemanticProperties.Hint="Connection to the AI"
-                Clicked="OnAboutClicked"
-                HorizontalOptions="Fill" />
+            <Button x:Name="StartGameBtn"
+                    Text="{Binding [MainPage_StartGame], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    SemanticProperties.Hint="Starts the logical game"
+                    Clicked="OnStartGameClicked"
+                    HorizontalOptions="Fill" />
+
+            <Button x:Name="SettingsBtn"
+                    Text="{Binding [MainPage_Settings], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    SemanticProperties.Hint="Opens the settings page"
+                    Clicked="OnSettingsClicked"
+                    HorizontalOptions="Fill" />
+
+            <Button x:Name="ConnectioToAI"
+                    Text="{Binding [MainPage_ConnectionAI], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    SemanticProperties.Hint="Connection to the AI"
+                    Clicked="OnAboutClicked"
+                    HorizontalOptions="Fill" />
+
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

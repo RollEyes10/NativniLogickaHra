@@ -6,6 +6,7 @@ namespace NativniLogickaHra.View;
 public partial class SettingsPage : ContentPage
 {
     private bool isInitializing = false;
+    private int _originalLanguage;
 
     public SettingsPage()
     {
@@ -15,163 +16,121 @@ public partial class SettingsPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-
         isInitializing = true;
 
-        // ensure named controls from XAML are available even if generated fields are missing
-        RequiredConsonantsSlider = this.FindByName<Slider>("RequiredConsonantsSlider");
-        RequiredConsonantsLabel = this.FindByName<Label>("RequiredConsonantsLabel");
+        // SMAZÁNO: FindByName — MAUI generuje fieldy automaticky z x:Name v XAML
+        // RequiredConsonantsSlider a RequiredConsonantsLabel jsou dostupné přímo
 
-        LanguagePicker.SelectedIndex =
-            Preferences.Default.Get("Language", 0);
-
-        VolumeSlider.Value =
-            Preferences.Default.Get("Volume", 50);
-
-        DifficultyPicker.SelectedIndex =
-            Preferences.Default.Get("Difficulty", 1);
-
-        LivesEnabledSwitch.IsToggled =
-            Preferences.Default.Get("LivesEnabled", true);
-
+        _originalLanguage = Preferences.Default.Get("Language", 0);
+        LanguagePicker.SelectedIndex = _originalLanguage;
+        VolumeSlider.Value = Preferences.Default.Get("Volume", 50);
+        DifficultyPicker.SelectedIndex = Preferences.Default.Get("Difficulty", 1);
+        LivesEnabledSwitch.IsToggled = Preferences.Default.Get("LivesEnabled", true);
         LivesSlider.IsEnabled = LivesEnabledSwitch.IsToggled;
-        LivesSlider.Value =
-            Preferences.Default.Get("LivesCount", 5);
-
-        RequiredConsonantsSlider.Value =
-            Preferences.Default.Get("RequiredConsonants", 3);
+        LivesSlider.Value = Preferences.Default.Get("LivesCount", 5);
+        RequiredConsonantsSlider.Value = Preferences.Default.Get("RequiredConsonants", 3);
 
         UpdateLabels();
-        UpdateAiStats();   // ← zobrazí statistiky při každém otevření stránky
+        UpdateAiStats();
 
         isInitializing = false;
     }
 
-    // ── Pomocné aktualizace ──────────────────────────────────────────────────
-
     private void UpdateLabels()
     {
-        VolumeLabel.Text = $"Hlasitost: {Math.Round(VolumeSlider.Value)} %";
-
+        VolumeLabel.Text = L.Get("Settings_Volume", (int)Math.Round(VolumeSlider.Value));
         LivesLabel.Text = LivesEnabledSwitch.IsToggled
-            ? $"Počet životů: {Math.Round(LivesSlider.Value)}"
-            : "Počet životů: ∞";
-
-        RequiredConsonantsLabel.Text =
-            $"Souhlásky pro povolení samohlásek: {Math.Round(RequiredConsonantsSlider.Value)}";
+                                         ? L.Get("Settings_Lives", (int)Math.Round(LivesSlider.Value))
+                                         : L.Get("Settings_LivesInfinite");
+        RequiredConsonantsLabel.Text = L.Get("Settings_Consonants", (int)Math.Round(RequiredConsonantsSlider.Value));
     }
 
     private void UpdateAiStats()
     {
-        // Úroveň jako text s barvou
         (string text, Color color) = PlayerStats.Difficulty switch
         {
-            1 => ("Easy 🟢", Color.FromArgb("#27AE60")),
-            2 => ("Medium 🟡", Color.FromArgb("#F39C12")),
-            _ => ("Hard 🔴", Color.FromArgb("#E74C3C"))
+            1 => (L.Get("Settings_AI_Easy"), Color.FromArgb("#27AE60")),
+            2 => (L.Get("Settings_AI_Medium"), Color.FromArgb("#F39C12")),
+            _ => (L.Get("Settings_AI_Hard"), Color.FromArgb("#E74C3C"))
         };
-
         AiDifficultyLabel.Text = text;
         AiDifficultyLabel.TextColor = color;
-
         StatsWinsLabel.Text = PlayerStats.Wins.ToString();
         StatsLossesLabel.Text = PlayerStats.Losses.ToString();
         StatsStreakLabel.Text = PlayerStats.Streak.ToString();
-        StatsWinRateLabel.Text = PlayerStats.TotalGames == 0
-            ? "–"
-            : $"{PlayerStats.WinRate:P0}";
+        StatsWinRateLabel.Text = PlayerStats.TotalGames == 0 ? "–" : $"{PlayerStats.WinRate:P0}";
     }
 
-    // ── Handlery sliderů / switchů ───────────────────────────────────────────
+    // ── Handlery sliderů ─────────────────────────────────────────────────────
 
     private void OnVolumeChanged(object sender, ValueChangedEventArgs e)
-    {
-        VolumeLabel.Text = $"Hlasitost: {Math.Round(e.NewValue)} %";
-    }
+        => VolumeLabel.Text = L.Get("Settings_Volume", (int)Math.Round(e.NewValue));
 
     private void OnLivesChanged(object sender, ValueChangedEventArgs e)
-    {
-        LivesLabel.Text = $"Počet životů: {Math.Round(e.NewValue)}";
-    }
+        => LivesLabel.Text = L.Get("Settings_Lives", (int)Math.Round(e.NewValue));
 
     private void OnLivesToggled(object sender, ToggledEventArgs e)
     {
         LivesSlider.IsEnabled = e.Value;
-
-        if (!e.Value)
-        {
-            LivesSlider.Value = 0;
-            LivesLabel.Text = "Počet životů: ∞";
-        }
+        LivesLabel.Text = e.Value
+            ? L.Get("Settings_Lives", (int)Math.Round(LivesSlider.Value))
+            : L.Get("Settings_LivesInfinite");
     }
 
     public void OnRequiredConsonantsChanged(object sender, ValueChangedEventArgs e)
-    {
-        RequiredConsonantsLabel.Text =
-            $"Souhlásky pro povolení samohlásek: {Math.Round(e.NewValue)}";
-    }
+        => RequiredConsonantsLabel.Text = L.Get("Settings_Consonants", (int)Math.Round(e.NewValue));
 
     // ── Reset statistik ──────────────────────────────────────────────────────
 
     private async void OnResetStatsClicked(object sender, EventArgs e)
     {
-        bool confirm = await DisplayAlert(
-            "Resetovat statistiky",
-            "Opravdu chceš smazat všechny statistiky a vrátit obtížnost na Easy?",
-            "Ano, resetovat", "Zrušit");
+        bool confirm = await DisplayAlertAsync(
+            L.Get("Settings_ResetConfirm_Title"),
+            L.Get("Settings_ResetConfirm_Message"),
+            L.Get("Settings_ResetConfirm_Yes"),
+            L.Get("Settings_ResetConfirm_No"));
 
         if (!confirm) return;
-
         PlayerStats.Reset();
         UpdateAiStats();
-
-        await DisplayAlert("Hotovo", "Statistiky byly resetovány.", "OK");
+        await DisplayAlertAsync(
+            L.Get("Settings_ResetDone_Title"),
+            L.Get("Settings_ResetDone_Message"),
+            L.Get("Settings_OK"));
     }
 
-    // ── Uložení a obtížnostní předvolby ─────────────────────────────────────
+    // ── Obtížnost ────────────────────────────────────────────────────────────
 
     private void OnDifficultyChanged(object sender, EventArgs e)
     {
         if (DifficultyPicker == null || isInitializing) return;
-
-        var diff = (Difficulty)DifficultyPicker.SelectedIndex;
-
-        switch (diff)
+        switch ((Difficulty)DifficultyPicker.SelectedIndex)
         {
-            case Difficulty.Easy:
-                LivesEnabledSwitch.IsToggled = true;
-                LivesSlider.Value = 8;
-                break;
-
-            case Difficulty.Normal:
-                LivesEnabledSwitch.IsToggled = true;
-                LivesSlider.Value = 5;
-                break;
-
-            case Difficulty.Hard:
-                LivesEnabledSwitch.IsToggled = true;
-                LivesSlider.Value = 3;
-                break;
-
-            case Difficulty.Custom:
-                break;
+            case Difficulty.Easy: LivesEnabledSwitch.IsToggled = true; LivesSlider.Value = 8; break;
+            case Difficulty.Normal: LivesEnabledSwitch.IsToggled = true; LivesSlider.Value = 5; break;
+            case Difficulty.Hard: LivesEnabledSwitch.IsToggled = true; LivesSlider.Value = 3; break;
         }
-
         UpdateLabels();
     }
 
+    // ── Uložení ──────────────────────────────────────────────────────────────
+
     private async void OnSaveClicked(object sender, EventArgs e)
     {
-        Preferences.Default.Set("Language", LanguagePicker.SelectedIndex);
+        int newLanguage = LanguagePicker.SelectedIndex;
+
+        Preferences.Default.Set("Language", newLanguage);
         Preferences.Default.Set("Volume", (int)VolumeSlider.Value);
         Preferences.Default.Set("Difficulty", DifficultyPicker.SelectedIndex);
-
         Preferences.Default.Set("LivesEnabled", LivesEnabledSwitch.IsToggled);
-        Preferences.Default.Set("LivesCount",
-            LivesEnabledSwitch.IsToggled ? (int)LivesSlider.Value : 0);
-
+        Preferences.Default.Set("LivesCount", LivesEnabledSwitch.IsToggled ? (int)LivesSlider.Value : 0);
         Preferences.Default.Set("RequiredConsonants", (int)RequiredConsonantsSlider.Value);
 
-        await Navigation.PopAsync();
+        LocalizationHelper.SetLanguage(newLanguage);
+
+        if (newLanguage != _originalLanguage)
+            Application.Current!.Windows[0].Page = new NavigationPage(new MainPage());
+        else
+            await Navigation.PopAsync();
     }
 }

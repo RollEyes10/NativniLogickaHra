@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:utils="clr-namespace:NativniLogickaHra.Utils"
              x:Class="NativniLogickaHra.View.SettingsPage"
-             Title="Nastavení">
+             Title="{Binding [Settings_Title], Source={x:Static utils:LocalizationHelper.Instance}}">
 
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
 
-            <Label Text="Nastavení hry"
+            <Label Text="{Binding [Settings_Heading], Source={x:Static utils:LocalizationHelper.Instance}}"
                    FontSize="24"
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
             <!-- Jazyk -->
             <VerticalStackLayout>
-                <Label Text="Jazyk aplikace:" />
+                <Label Text="{Binding [Settings_Language], Source={x:Static utils:LocalizationHelper.Instance}}" />
                 <Picker x:Name="LanguagePicker">
                     <Picker.Items>
                         <x:String>Čeština</x:String>
@@ -25,17 +26,15 @@
 
             <!-- Hlasitost -->
             <VerticalStackLayout>
-                <Label x:Name="VolumeLabel" Text="Hlasitost: 50 %" />
+                <Label x:Name="VolumeLabel" />
                 <Slider x:Name="VolumeSlider"
-                        Minimum="0"
-                        Maximum="100"
-                        Value="50"
+                        Minimum="0" Maximum="100" Value="50"
                         ValueChanged="OnVolumeChanged" />
             </VerticalStackLayout>
 
-            <!-- Obtížnost (manuální) -->
+            <!-- Obtížnost -->
             <VerticalStackLayout>
-                <Label Text="Obtížnost:" />
+                <Label Text="{Binding [Settings_Difficulty], Source={x:Static utils:LocalizationHelper.Instance}}" />
                 <Picker x:Name="DifficultyPicker" SelectedIndexChanged="OnDifficultyChanged">
                     <Picker.Items>
                         <x:String>Easy</x:String>
@@ -47,81 +46,90 @@
             </VerticalStackLayout>
 
             <!-- AI adaptivní obtížnost -->
-            <Frame Padding="15"
-                   CornerRadius="10"
-                   BorderColor="LightGray"
-                   BackgroundColor="#F5F5F5">
+            <Border Padding="15"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="{AppThemeBinding Light=#DDDDDD, Dark=#444444}"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}">
                 <VerticalStackLayout Spacing="8">
 
-                    <Label Text="Adaptivní obtížnost AI"
+                    <Label Text="{Binding [Settings_AI_Title], Source={x:Static utils:LocalizationHelper.Instance}}"
                            FontAttributes="Bold"
-                           FontSize="15" />
+                           FontSize="15"
+                           TextColor="{AppThemeBinding Light=#111111, Dark=#EEEEEE}" />
 
                     <HorizontalStackLayout Spacing="10">
-                        <Label Text="Aktuální úroveň:" VerticalOptions="Center" />
+                        <Label Text="{Binding [Settings_AI_Level], Source={x:Static utils:LocalizationHelper.Instance}}"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#333333, Dark=#CCCCCC}" />
                         <Label x:Name="AiDifficultyLabel"
                                FontAttributes="Bold"
                                FontSize="15"
-                               VerticalOptions="Center"
-                               TextColor="#2D89EF" />
+                               VerticalOptions="Center" />
                     </HorizontalStackLayout>
 
                     <HorizontalStackLayout Spacing="20">
                         <VerticalStackLayout>
-                            <Label Text="Výhry" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
-                            <Label x:Name="StatsWinsLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                            <Label Text="{Binding [Settings_Wins], Source={x:Static utils:LocalizationHelper.Instance}}"
+                                   FontSize="12" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=#888888}" />
+                            <Label x:Name="StatsWinsLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#111111, Dark=#EEEEEE}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout>
-                            <Label Text="Prohry" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
-                            <Label x:Name="StatsLossesLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                            <Label Text="{Binding [Settings_Losses], Source={x:Static utils:LocalizationHelper.Instance}}"
+                                   FontSize="12" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=#888888}" />
+                            <Label x:Name="StatsLossesLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#111111, Dark=#EEEEEE}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout>
-                            <Label Text="Série" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
-                            <Label x:Name="StatsStreakLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                            <Label Text="{Binding [Settings_Streak], Source={x:Static utils:LocalizationHelper.Instance}}"
+                                   FontSize="12" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=#888888}" />
+                            <Label x:Name="StatsStreakLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#111111, Dark=#EEEEEE}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout>
-                            <Label Text="Úspěšnost" FontSize="12" TextColor="Gray" HorizontalOptions="Center"/>
-                            <Label x:Name="StatsWinRateLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
+                            <Label Text="{Binding [Settings_WinRate], Source={x:Static utils:LocalizationHelper.Instance}}"
+                                   FontSize="12" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=Gray, Dark=#888888}" />
+                            <Label x:Name="StatsWinRateLabel" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#111111, Dark=#EEEEEE}" />
                         </VerticalStackLayout>
                     </HorizontalStackLayout>
 
-                    <Button Text="Resetovat statistiky"
+                    <Button Text="{Binding [Settings_ResetButton], Source={x:Static utils:LocalizationHelper.Instance}}"
                             BackgroundColor="#E74C3C"
                             TextColor="White"
                             CornerRadius="8"
                             Clicked="OnResetStatsClicked" />
 
                 </VerticalStackLayout>
-            </Frame>
+            </Border>
 
             <!-- Životy -->
             <VerticalStackLayout>
-                <Label Text="Omezené životy:" />
-                <Switch x:Name="LivesEnabledSwitch"
-                        IsToggled="true"
-                        Toggled="OnLivesToggled" />
+                <Label Text="{Binding [Settings_LivesEnabled], Source={x:Static utils:LocalizationHelper.Instance}}" />
+                <Switch x:Name="LivesEnabledSwitch" IsToggled="true" Toggled="OnLivesToggled" />
             </VerticalStackLayout>
 
             <VerticalStackLayout>
-                <Label x:Name="LivesLabel" Text="Počet životů: 5" />
+                <Label x:Name="LivesLabel" />
                 <Slider x:Name="LivesSlider"
-                        Minimum="0"
-                        Maximum="10"
-                        Value="5"
+                        Minimum="0" Maximum="10" Value="5"
                         ValueChanged="OnLivesChanged" />
             </VerticalStackLayout>
 
             <!-- Samohlásky -->
             <VerticalStackLayout>
-                <Label x:Name="RequiredConsonantsLabel" Text="Souhlásky pro povolení samohlásek: 3" />
+                <Label x:Name="RequiredConsonantsLabel" />
                 <Slider x:Name="RequiredConsonantsSlider"
-                        Minimum="0"
-                        Maximum="10"
-                        Value="3"
+                        Minimum="0" Maximum="10" Value="3"
                         ValueChanged="OnRequiredConsonantsChanged" />
             </VerticalStackLayout>
 
-            <Button Text="Uložit a zpět"
+            <Button Text="{Binding [Settings_Save], Source={x:Static utils:LocalizationHelper.Instance}}"
                     Margin="0,20,0,0"
                     Clicked="OnSaveClicked" />
 

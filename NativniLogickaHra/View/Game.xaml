@@ -1,37 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:utils="clr-namespace:NativniLogickaHra.Utils"
              x:Class="NativniLogickaHra.View.Game"
-             Title="Šibenice">
+             Title="{Binding [Game_Title], Source={x:Static utils:LocalizationHelper.Instance}}">
 
     <VerticalStackLayout Padding="20" Spacing="10">
 
         <Label x:Name="lblSecretWord"
-           FontSize="28"
-           HorizontalOptions="Center"/>
+               FontSize="28"
+               HorizontalOptions="Center"/>
 
         <Label x:Name="lblInfo"
-           FontSize="14"
-           HorizontalOptions="Center"/>
+               FontSize="14"
+               HorizontalOptions="Center"/>
 
         <Label x:Name="lblStatus"
-           FontSize="14"
-           TextColor="Gray"
-           HorizontalOptions="Center"/>
+               FontSize="14"
+               TextColor="Gray"
+               HorizontalOptions="Center"/>
 
         <Entry x:Name="entGuess"
-           Placeholder="Zadej písmeno"
-           MaxLength="1"
-           ReturnType="Done"
-           Completed="OnGuessCompleted" />
+               Placeholder="{Binding [Game_GuessPlaceholder], Source={x:Static utils:LocalizationHelper.Instance}}"
+               MaxLength="1"
+               ReturnType="Done"
+               Completed="OnGuessCompleted"/>
 
-
-        <Button Text="Hádej"
-           Clicked="OnGuessCompleted"/>
+        <Button Text="{Binding [Game_GuessButton], Source={x:Static utils:LocalizationHelper.Instance}}"
+                Clicked="OnGuessCompleted"/>
 
         <Label x:Name="lblWrongLetters"
-           FontSize="16"
-           TextColor="Red"
-           HorizontalOptions="Center"
-           Text="Špatně uhodnutá písmena: "/>
+               FontSize="16"
+               TextColor="Red"
+               HorizontalOptions="Center"/>
+
     </VerticalStackLayout>
 </ContentPage>

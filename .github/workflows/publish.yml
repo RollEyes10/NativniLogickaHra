@@ -32,18 +32,22 @@ jobs:
       # 🏗 Windows Build
       - name: Publish Windows
         run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows /p:PublishSingleFile=true /p:WindowsPackageType=None
-
-      # 📦 Zip Windows
-      - name: Zip Windows Build
-        run: Compress-Archive -Path ./artifacts/windows/*.exe -DestinationPath ./artifacts/NativniLogickaHra-win.zip
-
+        
       # 📱 Android Build
       - name: Publish Android
         run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android /p:AndroidPackageFormats=aab
 
-      # 📦 Zip Android – jen AAB
-      - name: Zip Android Build
-        run: Compress-Archive -Path ./artifacts/android/**/*.aab -DestinationPath ./artifacts/NativniLogickaHra-android.zip
+      - name: Get exe path
+        id: get_exe
+        run: |
+          $exe = Get-ChildItem -Path ./artifacts/windows -Filter *.exe | Select-Object -First 1
+          echo "exe_path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Get aab path
+        id: get_aab
+        run: |
+          $aab = Get-ChildItem -Path ./artifacts/android -Filter *.aab -Recurse | Select-Object -First 1
+          echo "aab_path=$($aab.FullName)" >> $env:GITHUB_OUTPUT
 
       # 🚀 Create Release
       - name: Create GitHub Release
@@ -51,7 +55,7 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            ./artifacts/NativniLogickaHra-win.zip
-            ./artifacts/NativniLogickaHra-android.zip
+            ${{ steps.get_exe.outputs.exe_path }}
+            ${{ steps.get_aab.outputs.aab_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

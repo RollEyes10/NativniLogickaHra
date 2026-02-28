@@ -7,37 +7,39 @@
 public static class WordHistory
 {
     private const int MaxHistory = 20;
+    private const int MaxRetries = 5;  // zvýšeno pro lepší unikátnost
     private const string PrefsKey = "word_history";
     private const char Separator = '|';
 
     private static readonly object Lock = new();
-
-    // RAM cache — načte se z Preferences při prvním použití
     private static LinkedList<string>? _history;
 
     private static LinkedList<string> History
     {
         get
         {
-            if (_history == null)
-                _history = LoadFromPrefs();
+            _history ??= LoadFromPrefs();
             return _history;
         }
     }
 
-    // ── Veřejné API ──────────────────────────────────────────────────────────
-
     /// <summary>
     /// Přidá slovo do historie. Pokud je seznam plný, odstraní nejstarší.
+    /// Ignoruje duplicity — stejné slovo se neuloží dvakrát.
     /// </summary>
     public static void Add(string word)
     {
         if (string.IsNullOrWhiteSpace(word)) return;
+        word = word.ToLower().Trim();
 
         lock (Lock)
         {
-            // Zabrání duplicitám po sobě jdoucím
-            if (History.Last?.Value == word) return;
+            // Ignoruj pokud už slovo v historii je
+            if (History.Any(w => string.Equals(w, word, StringComparison.OrdinalIgnoreCase)))
+            {
+                Logger.Log($"WordHistory: '{word}' already in history, skipping");
+                return;
+            }
 
             History.AddLast(word);
 
@@ -50,20 +52,9 @@ public static class WordHistory
     }
 
     /// <summary>
-    /// Vrátí kopii historie (nejstarší → nejnovější).
-    /// </summary>
-    public static IReadOnlyList<string> GetAll()
-    {
-        lock (Lock)
-        {
-            return History.ToList().AsReadOnly();
-        }
-    }
-
-    /// <summary>
     /// Vrátí true pokud bylo slovo použito v posledních N slovech.
     /// </summary>
-    public static bool WasRecentlyUsed(string word, int lookback = MaxHistory)
+    public static bool WasRecentlyUsed(string? word, int lookback = MaxHistory)
     {
         if (string.IsNullOrWhiteSpace(word)) return false;
 
@@ -76,7 +67,15 @@ public static class WordHistory
     }
 
     /// <summary>
-    /// Vymaže celou historii (např. při novém profilu).
+    /// Vrátí kopii historie (nejstarší → nejnovější).
+    /// </summary>
+    public static IReadOnlyList<string> GetAll()
+    {
+        lock (Lock) { return History.ToList().AsReadOnly(); }
+    }
+
+    /// <summary>
+    /// Vymaže celou historii.
     /// </summary>
     public static void Clear()
     {
@@ -88,20 +87,14 @@ public static class WordHistory
         }
     }
 
-    /// <summary>
-    /// Počet aktuálně uložených slov.
-    /// </summary>
     public static int Count
     {
         get { lock (Lock) { return History.Count; } }
     }
 
-    // ── Persistence ───────────────────────────────────────────────────────────
-
     private static LinkedList<string> LoadFromPrefs()
     {
         var raw = Preferences.Default.Get(PrefsKey, string.Empty);
-
         if (string.IsNullOrWhiteSpace(raw))
             return new LinkedList<string>();
 
@@ -112,7 +105,6 @@ public static class WordHistory
 
     private static void SaveToPrefs()
     {
-        var raw = string.Join(Separator, History);
-        Preferences.Default.Set(PrefsKey, raw);
+        Preferences.Default.Set(PrefsKey, string.Join(Separator, History));
     }
 }

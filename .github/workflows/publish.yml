@@ -31,19 +31,19 @@ jobs:
 
       # 🏗 Windows Build
       - name: Publish Windows
-        run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows
-
-      # 📱 Android Build
-      - name: Publish Android
-        run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android
+        run: dotnet publish -f net10.0-windows10.0.19041.0 -c Release -o ./artifacts/windows /p:PublishSingleFile=true /p:WindowsPackageType=None
 
       # 📦 Zip Windows
       - name: Zip Windows Build
-        run: Compress-Archive -Path ./artifacts/windows/* -DestinationPath ./artifacts/NativniLogickaHra-win.zip
+        run: Compress-Archive -Path ./artifacts/windows/*.exe -DestinationPath ./artifacts/NativniLogickaHra-win.zip
 
-      # 📦 Zip Android
+      # 📱 Android Build
+      - name: Publish Android
+        run: dotnet publish -f net10.0-android -c Release -o ./artifacts/android /p:AndroidPackageFormats=aab
+
+      # 📦 Zip Android – jen AAB
       - name: Zip Android Build
-        run: Compress-Archive -Path ./artifacts/android/* -DestinationPath ./artifacts/NativniLogickaHra-android.zip
+        run: Compress-Archive -Path ./artifacts/android/**/*.aab -DestinationPath ./artifacts/NativniLogickaHra-android.zip
 
       # 🚀 Create Release
       - name: Create GitHub Release

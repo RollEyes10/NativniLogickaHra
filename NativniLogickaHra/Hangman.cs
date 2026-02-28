@@ -16,7 +16,8 @@ public class Hangman
     private int remainingVowels;
     private readonly int requiredConsonants;
 
-    private readonly char[] vowels = { 'a', 'e', 'i', 'o', 'u', 'y' };
+    // Y je v češtině SOUHLÁSKA — odstraněno z pole samohlásek
+    private readonly char[] vowels = { 'a', 'e', 'i', 'o', 'u' };
 
     public Hangman(string word, int attempts, bool vowelsEnabled, int vowelsCount, int requiredConsonants = 3)
     {
@@ -56,7 +57,7 @@ public class Hangman
         {
             if (normalizedWord[i] == guess)
             {
-                SecretWord[i] = TargetWord[i]; // zachovává diakritiku
+                SecretWord[i] = TargetWord[i];
                 found = true;
             }
         }

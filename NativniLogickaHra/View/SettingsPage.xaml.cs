@@ -18,13 +18,11 @@ public partial class SettingsPage : ContentPage
         base.OnAppearing();
         isInitializing = true;
 
-        // SMAZÁNO: FindByName — MAUI generuje fieldy automaticky z x:Name v XAML
-        // RequiredConsonantsSlider a RequiredConsonantsLabel jsou dostupné přímo
-
         _originalLanguage = Preferences.Default.Get("Language", 0);
         LanguagePicker.SelectedIndex = _originalLanguage;
         VolumeSlider.Value = Preferences.Default.Get("Volume", 50);
         DifficultyPicker.SelectedIndex = Preferences.Default.Get("Difficulty", 1);
+        TopicPicker.SelectedIndex = TopicHelper.SavedTopic;
         LivesEnabledSwitch.IsToggled = Preferences.Default.Get("LivesEnabled", true);
         LivesSlider.IsEnabled = LivesEnabledSwitch.IsToggled;
         LivesSlider.Value = Preferences.Default.Get("LivesCount", 5);
@@ -61,8 +59,6 @@ public partial class SettingsPage : ContentPage
         StatsWinRateLabel.Text = PlayerStats.TotalGames == 0 ? "–" : $"{PlayerStats.WinRate:P0}";
     }
 
-    // ── Handlery sliderů ─────────────────────────────────────────────────────
-
     private void OnVolumeChanged(object sender, ValueChangedEventArgs e)
         => VolumeLabel.Text = L.Get("Settings_Volume", (int)Math.Round(e.NewValue));
 
@@ -79,8 +75,6 @@ public partial class SettingsPage : ContentPage
 
     public void OnRequiredConsonantsChanged(object sender, ValueChangedEventArgs e)
         => RequiredConsonantsLabel.Text = L.Get("Settings_Consonants", (int)Math.Round(e.NewValue));
-
-    // ── Reset statistik ──────────────────────────────────────────────────────
 
     private async void OnResetStatsClicked(object sender, EventArgs e)
     {
@@ -99,8 +93,6 @@ public partial class SettingsPage : ContentPage
             L.Get("Settings_OK"));
     }
 
-    // ── Obtížnost ────────────────────────────────────────────────────────────
-
     private void OnDifficultyChanged(object sender, EventArgs e)
     {
         if (DifficultyPicker == null || isInitializing) return;
@@ -113,8 +105,6 @@ public partial class SettingsPage : ContentPage
         UpdateLabels();
     }
 
-    // ── Uložení ──────────────────────────────────────────────────────────────
-
     private async void OnSaveClicked(object sender, EventArgs e)
     {
         int newLanguage = LanguagePicker.SelectedIndex;
@@ -125,6 +115,7 @@ public partial class SettingsPage : ContentPage
         Preferences.Default.Set("LivesEnabled", LivesEnabledSwitch.IsToggled);
         Preferences.Default.Set("LivesCount", LivesEnabledSwitch.IsToggled ? (int)LivesSlider.Value : 0);
         Preferences.Default.Set("RequiredConsonants", (int)RequiredConsonantsSlider.Value);
+        TopicHelper.SavedTopic = TopicPicker.SelectedIndex;
 
         LocalizationHelper.SetLanguage(newLanguage);
 

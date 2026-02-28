@@ -26,8 +26,17 @@
                ReturnType="Done"
                Completed="OnGuessCompleted"/>
 
-        <Button Text="{Binding [Game_GuessButton], Source={x:Static utils:LocalizationHelper.Instance}}"
-                Clicked="OnGuessCompleted"/>
+        <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+            <Button Text="{Binding [Game_GuessButton], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    Clicked="OnGuessCompleted"
+                    HorizontalOptions="Fill"/>
+
+            <Button x:Name="btnHint"
+                    Text="{Binding [Game_HintButton], Source={x:Static utils:LocalizationHelper.Instance}}"
+                    Clicked="OnHintClicked"
+                    BackgroundColor="#F39C12"
+                    TextColor="White"/>
+        </HorizontalStackLayout>
 
         <Label x:Name="lblWrongLetters"
                FontSize="16"

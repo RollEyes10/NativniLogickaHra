@@ -45,6 +45,24 @@
                 </Picker>
             </VerticalStackLayout>
 
+            <!-- Téma slov -->
+            <VerticalStackLayout>
+                <Label Text="{Binding [Settings_Topic], Source={x:Static utils:LocalizationHelper.Instance}}" />
+                <Picker x:Name="TopicPicker">
+                    <Picker.Items>
+                        <x:String>🎲 Vše (náhodné)</x:String>
+                        <x:String>🐾 Zvířata</x:String>
+                        <x:String>🍕 Jídlo</x:String>
+                        <x:String>⚽ Sport</x:String>
+                        <x:String>🌿 Příroda</x:String>
+                        <x:String>💻 Technologie</x:String>
+                        <x:String>🌍 Země a města</x:String>
+                        <x:String>👷 Povolání</x:String>
+                        <x:String>🫀 Lidské tělo</x:String>
+                    </Picker.Items>
+                </Picker>
+            </VerticalStackLayout>
+
             <!-- AI adaptivní obtížnost -->
             <Border Padding="15"
                     StrokeThickness="1"

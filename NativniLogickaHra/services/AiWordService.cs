@@ -9,20 +9,31 @@ public static class AiWordService
 {
     private static readonly RateLimiter GeminiLimiter = new RateLimiter(5, TimeSpan.FromMinutes(1));
 
-    private const int MaxRetries = 3; // kolikrát zkusit znovu při nevhodném slově
+    private const int MaxRetries = 5; // kolikrát zkusit znovu při nevhodném nebo duplicitním slově
 
     private static readonly string[] Themes =
     {
         "zvíře", "předmět", "povolání", "příroda", "město", "technologie", "sport", "jídlo", "činnost", "náhodné slovo"
     };
 
-    private static string BuildPrompt()
+    private static string BuildPrompt(string topic = "", int difficulty = 1)
     {
+        string difficultyInstruction = difficulty switch
+        {
+            1 => "Slovo musí být krátké a jednoduché (3–5 písmen), vhodné pro děti. Například: pes, kos, ryba, auto.",
+            2 => "Slovo musí být středně obtížné (6–8 písmen). Například: zahrada, vlajka, skříň, brýle.",
+            3 => "Slovo musí být dlouhé a obtížné (9+ písmen), méně časté slovo. Například: orchestr, dalekohledy, přídavné.",
+            _ => ""
+        };
+
+        if (!string.IsNullOrEmpty(topic))
+            return $"Vrať jedno náhodné české slovo z kategorie: {topic}. {difficultyInstruction} Pouze jedno slovo, bez uvozovek a vysvětlení.";
+
         var theme = Themes[Random.Shared.Next(Themes.Length)];
-        return $"Vrať jedno náhodné české slovo z kategorie {theme}. Pouze slovo, bez uvozovek a vysvětlení.";
+        return $"Vrať jedno náhodné české slovo z kategorie {theme}. {difficultyInstruction} Pouze jedno slovo, bez uvozovek a vysvětlení.";
     }
 
-    public static async Task<string?> GetWordAsync(string provider, string apiKey)
+    public static async Task<string?> GetWordAsync(string provider, string apiKey, string topic = "", int difficulty = 1)
     {
         Logger.Log($"GetWordAsync start - provider: {provider}");
         try
@@ -31,20 +42,20 @@ public static class AiWordService
             {
                 string? word = provider switch
                 {
-                    "Gemini" => await FromGemini(apiKey),
-                    "ChatGPT" => await FromChatGPT(apiKey),
-                    "Claude" => await FromClaude(apiKey),
+                    "Gemini" => await FromGemini(apiKey, topic, difficulty),
+                    "ChatGPT" => await FromChatGPT(apiKey, topic, difficulty),
+                    "Claude" => await FromClaude(apiKey, topic, difficulty),
                     _ => null
                 };
 
-                if (WordFilter.IsAllowed(word))
+                if (WordFilter.IsAllowed(word) && !WordHistory.WasRecentlyUsed(word))
                 {
                     Logger.Log($"GetWordAsync: accepted word '{word}' on attempt {attempt}");
                     WordHistory.Add(word!);
                     return word;
                 }
 
-                Logger.Log($"GetWordAsync: word '{word}' rejected by filter (attempt {attempt}/{MaxRetries})");
+                Logger.Log($"GetWordAsync: word '{word}' rejected (duplicate or filter) on attempt {attempt}/{MaxRetries}");
             }
 
             Logger.Log("GetWordAsync: all attempts returned filtered words, returning null");
@@ -56,7 +67,7 @@ public static class AiWordService
         }
     }
 
-    private static async Task<string?> FromGemini(string apiKey)
+    private static async Task<string?> FromGemini(string apiKey, string topic = "", int difficulty = 1)
     {
         if (!GeminiLimiter.TryAcquire(out var retryAfter))
             throw new Exception($"Limit vyčerpán. Zkuste za {retryAfter.Seconds}s");
@@ -66,7 +77,7 @@ public static class AiWordService
         using var client = new Google.GenAI.Client();
         var response = await client.Models.GenerateContentAsync(
             model: AiConfig.GeminiModel,
-            contents: BuildPrompt()
+            contents: BuildPrompt(topic, difficulty)
         );
 
         string? text = response?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
@@ -74,7 +85,7 @@ public static class AiWordService
         return CleanWord(text);
     }
 
-    private static async Task<string?> FromChatGPT(string apiKey)
+    private static async Task<string?> FromChatGPT(string apiKey, string topic = "", int difficulty = 1)
     {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization =
@@ -83,7 +94,7 @@ public static class AiWordService
         var payload = new
         {
             model = AiConfig.ChatGptModel,
-            input = BuildPrompt(),
+            input = BuildPrompt(topic, difficulty),
             temperature = 1.1
         };
 
@@ -127,7 +138,7 @@ public static class AiWordService
         }
     }
 
-    private static async Task<string?> FromClaude(string apiKey)
+    private static async Task<string?> FromClaude(string apiKey, string topic = "", int difficulty = 1)
     {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Add("x-api-key", apiKey);
@@ -140,7 +151,7 @@ public static class AiWordService
             temperature = 1.0,
             messages = new[]
             {
-                new { role = "user", content = BuildPrompt() }
+                new { role = "user", content = BuildPrompt(topic, difficulty) }
             }
         };
 
